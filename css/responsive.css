@@ -1,0 +1,10 @@
+/* Ajustes para telas pequenas */
+@media (max-width:900px){
+  .sidebar{ display:none; }
+  .main{ padding:20px; }
+  .kpi-grid{ grid-template-columns:repeat(2,1fr); }
+  .two-col{ grid-template-columns:1fr; }
+  .combo-pick{ grid-template-columns:1fr; }
+  .field-row{ grid-template-columns:1fr; }
+  .kanban-board{ grid-template-columns:1fr; }
+}
