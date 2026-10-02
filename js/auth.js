@@ -1,6 +1,6 @@
-/* Autenticação (Supabase Auth). Deve ser o ÚLTIMO script: chama initApp() */
-/* ---------- AUTENTICAÇÃO ---------- */
-let appInitialized = false;
+/* Autenticação (Supabase Auth): login, logout, redefinição de senha e sessão */
+import { supabaseClient } from './config.js';
+import { startApp, stopApp } from './app.js';
 
 /* A tela de login tem três painéis: entrar, pedir o link de redefinição e
    criar a nova senha. O terceiro só abre quando o usuário chega pelo e-mail. */
@@ -31,16 +31,16 @@ function showAuthPanel(name, manterMensagens){
 
 function showLogin(){
   document.body.classList.remove('authed');
+  stopApp();
   if(!recoveryMode) showAuthPanel('login', true);
 }
 function showApp(session){
   document.body.classList.add('authed');
-  const emailEl = document.getElementById('sidebarUserEmail');
-  if(emailEl) emailEl.textContent = session?.user?.email || '';
-  if(!appInitialized){
-    appInitialized = true;
-    initApp();
-  }
+  document.getElementById('sidebarUserEmail').textContent = session?.user?.email || '';
+  /* Fora da pilha do onAuthStateChange: o cliente do Supabase segura um lock
+     durante o callback, e consultar o banco ali dentro pode travar. startApp
+     ignora chamadas repetidas (o evento dispara de novo a cada renovação de token). */
+  setTimeout(startApp, 0);
 }
 
 /* ---------- LINK DE REDEFINIÇÃO NA URL ----------

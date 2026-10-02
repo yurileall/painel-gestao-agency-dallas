@@ -1,23 +1,26 @@
 /* Configurações do app (SLA) */
-async function loadSettings(){
-  try{
-    const { data, error } = await supabaseClient.from('app_settings').select('sla_days').eq('id', 1).maybeSingle();
-    if(error) throw error;
-    slaDays = data?.sla_days || 3;
-  }catch(e){
-    console.error('Falha ao carregar configurações', e);
-    slaDays = 3;
-    toast('Não foi possível carregar as configurações: ' + dbErrorMessage(e), 'error');
-  }
+import { supabaseClient } from '../config.js';
+import { DEFAULT_SLA_DAYS } from '../constants.js';
+import { state, notify } from '../store.js';
+import { run } from './db.js';
+
+export async function loadSettings(){
+  const res = await run('Falha ao carregar configurações',
+    () => supabaseClient.from('app_settings').select('sla_days').eq('id', 1).maybeSingle());
+  if(res.ok){ state.slaDays = res.data?.sla_days || DEFAULT_SLA_DAYS; notify(); }
+  return res;
 }
-async function saveSettings(){
-  try{
-    const { error } = await supabaseClient.from('app_settings').upsert({ id: 1, sla_days: slaDays }, { onConflict: 'id' });
-    if(error) throw error;
-    return true;
-  }catch(e){
-    console.error('Falha ao salvar config', e);
-    toast('Não foi possível salvar a configuração: ' + dbErrorMessage(e), 'error');
-    return false;
-  }
+
+/** @param {number} days */
+export async function saveSlaDays(days){
+  const res = await run('Falha ao salvar configuração',
+    () => supabaseClient.from('app_settings').upsert({ id:1, sla_days:days }, { onConflict:'id' }));
+  if(res.ok){ state.slaDays = days; notify(); }
+  return res;
+}
+
+export function applySettingsChange(payload){
+  if(payload.eventType === 'DELETE' || payload.new?.id !== 1) return;
+  state.slaDays = payload.new.sla_days || DEFAULT_SLA_DAYS;
+  notify();
 }

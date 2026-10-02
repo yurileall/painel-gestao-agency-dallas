@@ -1,12 +1,17 @@
 /* Navegação entre as telas */
-// ---------- NAV ----------
-$$('.nav-item').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    $$('.nav-item').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    currentView = btn.dataset.view;
-    $$('.view').forEach(v=>v.classList.remove('active'));
-    $('#view-'+currentView).classList.add('active');
-    renderAll();
+import { state, notify } from '../store.js';
+import { $, $$ } from './dom.js';
+
+$('.nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-item');
+  if(!btn) return;
+  state.currentView = btn.dataset.view;
+  $$('.nav-item').forEach(b => {
+    const active = b === btn;
+    b.classList.toggle('active', active);
+    if(active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + state.currentView));
+  btn.scrollIntoView({ block:'nearest', inline:'nearest' }); // no celular o menu rola na horizontal
+  notify();
 });

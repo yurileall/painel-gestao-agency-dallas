@@ -1,86 +1,92 @@
-/* Modal de lead (criar, editar, excluir, converter) */
-const leadOverlay = $('#leadOverlay');
-function openLeadModal(lead){
-  editingLeadId = lead ? lead.id : null;
+/* Modal de lead (criar, editar, excluir, converter em cliente) */
+import { COMBOS } from '../constants.js';
+import { state } from '../store.js';
+import { saveLead, deleteLead } from '../data/leads.js';
+import { todayISO } from '../lib/dates.js';
+import { escapeHtml } from '../lib/format.js';
+import { newId } from '../lib/mappers.js';
+import { validateLead } from '../lib/validate.js';
+import { $, toast } from './dom.js';
+import { createModal } from './modal.js';
+import { openClientModal } from './client-modal.js';
+
+const FIELD_IDS = { name:'lName', whatsapp:'lWhats', combo:'lCombo', contactDate:'lContactDate', followUpDate:'lFollowUpDate' };
+
+let editingId = null;
+
+const modal = createModal($('#leadOverlay'), {
+  onClose(){ editingId = null; },
+});
+
+$('#lCombo').innerHTML = '<option value="">Ainda não decidiu</option>'
+  + Object.entries(COMBOS).map(([key, c]) => `<option value="${key}">${escapeHtml(c.label)}</option>`).join('');
+
+/** @param {import('../lib/mappers.js').Lead|null} lead null para um lead novo */
+export function openLeadModal(lead){
+  modal.open();
+  editingId = lead ? lead.id : null;
   $('#leadModalTitle').textContent = lead ? 'Editar lead' : 'Novo lead';
   $('#lName').value = lead?.name || '';
   $('#lWhats').value = lead?.whatsapp || '';
   $('#lCombo').value = lead?.combo || '';
-  $('#lContactDate').value = lead?.contactDate || new Date().toISOString().slice(0,10);
+  $('#lContactDate').value = lead?.contactDate || todayISO();
   $('#lFollowUpDate').value = lead?.followUpDate || '';
   $('#lNotes').value = lead?.notes || '';
-  $('#btnDeleteLead').style.display = lead ? 'inline-flex' : 'none';
-  $('#btnConvertLead').style.display = lead ? 'inline-flex' : 'none';
-  leadOverlay.classList.add('open');
+  $('#btnDeleteLead').hidden = !lead;
+  $('#btnConvertLead').hidden = !lead;
 }
-function closeLeadModal(){ leadOverlay.classList.remove('open'); editingLeadId=null; }
-$('#closeLeadModal').onclick = closeLeadModal;
-$('#btnCancelLead').onclick = closeLeadModal;
-leadOverlay.addEventListener('click', e=>{ if(e.target===leadOverlay) closeLeadModal(); });
-$('#btnNewLead').onclick = ()=>openLeadModal(null);
 
-$('#btnSaveLead').onclick = async ()=>{
-  const name = $('#lName').value.trim();
-  if(!name){ $('#lName').focus(); return; }
+$('#btnSaveLead').addEventListener('click', async () => {
   const lead = {
-    id: editingLeadId || uid(),
-    name,
+    id: editingId || newId('l'),
+    name: $('#lName').value.trim(),
     whatsapp: $('#lWhats').value.trim(),
     combo: $('#lCombo').value,
     contactDate: $('#lContactDate').value,
     followUpDate: $('#lFollowUpDate').value || null,
     notes: $('#lNotes').value.trim(),
   };
-  const idx = editingLeadId ? leads.findIndex(l=>l.id===editingLeadId) : -1;
-  const anterior = idx >= 0 ? leads[idx] : null;
-  if(idx >= 0){ leads[idx] = lead; } else { leads.push(lead); }
+  const errors = validateLead(lead);
+  if(Object.keys(errors).length){ modal.showErrors(errors, FIELD_IDS); return; }
 
-  const btn = $('#btnSaveLead');
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  const ok = await saveLeads();
-  btn.disabled = false; btn.textContent = label;
-
-  if(!ok){
-    if(idx >= 0){ leads[idx] = anterior; } else { leads = leads.filter(l=>l!==lead); }
+  const res = await modal.busy($('#btnSaveLead'), 'Salvando...', () => saveLead(lead));
+  if(!res.ok){
+    modal.setFormError(`Não foi salvo: ${res.message} Seus dados continuam aqui — clique em Salvar para tentar de novo.`);
     return;
   }
-  closeLeadModal();
-  renderLeadsTable();
-};
+  modal.close();
+  toast('Lead salvo.', 'ok');
+});
 
-$('#btnDeleteLead').onclick = async ()=>{
-  if(!editingLeadId) return;
-  const anteriores = leads;
-  leads = leads.filter(l=>l.id!==editingLeadId);
-  const ok = await saveLeads();
-  if(!ok){ leads = anteriores; return; }
-  closeLeadModal();
-  renderLeadsTable();
-};
-
-$('#btnConvertLead').onclick = ()=>{
-  if(!editingLeadId) return;
-  const lead = leads.find(l=>l.id===editingLeadId);
+$('#btnDeleteLead').addEventListener('click', async () => {
+  const lead = state.leads.find(l => l.id === editingId);
   if(!lead) return;
-  const leadId = lead.id;
-  closeLeadModal();
-  // abre o modal de cliente pré-preenchido com os dados do lead
-  openModal(null);
-  $('#fName').value = lead.name;
-  $('#fWhats').value = lead.whatsapp;
-  $('#fNiche').value = '';
-  if(lead.combo){ pickCombo(lead.combo, true); renderChecklist({}, lead.combo, true); }
-  $('#fNotes').value = lead.notes ? `(Veio do follow-up) ${lead.notes}` : '';
-  // ao salvar o cliente, remove o lead da lista de follow-up
-  const originalSave = $('#btnSave').onclick;
-  $('#btnSave').onclick = async ()=>{
-    /* Só tira o lead do follow-up se o cliente realmente entrou no banco. */
-    const ok = await originalSave();
-    if(!ok) return;
-    leads = leads.filter(l=>l.id!==leadId);
-    await saveLeads();
-    renderLeadsTable();
-    $('#btnSave').onclick = originalSave;
-  };
-};
+  if(!confirm(`Excluir o lead "${lead.name}"? Essa ação não pode ser desfeita.`)) return;
+
+  const res = await modal.busy($('#btnDeleteLead'), 'Excluindo...', () => deleteLead(lead.id));
+  if(!res.ok){ modal.setFormError(`Não foi excluído: ${res.message}`); return; }
+  modal.close();
+  toast('Lead excluído.', 'ok');
+});
+
+/* Abre o modal de cliente já preenchido. O lead só sai do follow-up depois que
+   o cliente entra no banco; se o usuário cancelar, nada acontece com o lead. */
+$('#btnConvertLead').addEventListener('click', () => {
+  const lead = state.leads.find(l => l.id === editingId);
+  if(!lead) return;
+  modal.close();
+  openClientModal(null, {
+    prefill: {
+      name: lead.name,
+      whatsapp: lead.whatsapp,
+      combo: lead.combo,
+      notes: lead.notes ? `(Veio do follow-up) ${lead.notes}` : '',
+    },
+    async onSaved(){
+      const res = await deleteLead(lead.id);
+      if(!res.ok) toast(`Cliente criado, mas o lead "${lead.name}" continua no follow-up: ${res.message}`, 'error');
+    },
+  });
+});
+
+$('#btnCancelLead').addEventListener('click', modal.close);
