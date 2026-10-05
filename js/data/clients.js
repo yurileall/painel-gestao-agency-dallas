@@ -46,29 +46,34 @@ async function loadClients(){
     toast('Não foi possível carregar os clientes: ' + dbErrorMessage(e), 'error');
   }
 }
-/* Devolve true somente quando o banco confirmou a gravação. Quem chama
-   PRECISA checar o retorno: antes isso falhava calado e a tela continuava
-   mostrando o cliente que nunca chegou ao banco. */
-async function saveClients(){
+/* Grava UM cliente. Nada de mandar a lista inteira: o painel tem login e
+   pode estar aberto em mais de uma aba ou por mais de uma pessoa, e subir o
+   array local inteiro (com a limpeza dos ids que "sobram") apagava o que o
+   outro tinha acabado de cadastrar.
+   Devolve true só quando o banco confirmou. Quem chama PRECISA checar. */
+async function saveClient(client){
   try{
-    const rows = clients.map(clientToRow);
-    if(rows.length){
-      const { error } = await supabaseClient.from('clients').upsert(rows, { onConflict: 'id' });
-      if(error) throw error;
-    }
-    // remove no banco qualquer cliente que não exista mais localmente (exclusões)
-    const { data: existing, error: selErr } = await supabaseClient.from('clients').select('id');
-    if(selErr) throw selErr;
-    const localIds = new Set(clients.map(c=>c.id));
-    const toDelete = (existing || []).map(r=>r.id).filter(id=>!localIds.has(id));
-    if(toDelete.length){
-      const { error: delErr } = await supabaseClient.from('clients').delete().in('id', toDelete);
-      if(delErr) throw delErr;
-    }
+    const row = clientToRow(client);
+    row.updated_at = new Date().toISOString();
+    const { error } = await supabaseClient.from('clients').upsert(row, { onConflict: 'id' });
+    if(error) throw error;
     return true;
   }catch(e){
-    console.error('Falha ao salvar clientes', e);
+    console.error('Falha ao salvar cliente', e);
     toast('Não foi possível salvar no banco: ' + dbErrorMessage(e), 'error');
+    return false;
+  }
+}
+
+/* Apaga UM cliente, pelo id. */
+async function deleteClient(id){
+  try{
+    const { error } = await supabaseClient.from('clients').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    console.error('Falha ao excluir cliente', e);
+    toast('Não foi possível excluir no banco: ' + dbErrorMessage(e), 'error');
     return false;
   }
 }
@@ -95,7 +100,7 @@ async function moveClientToStatus(id, newStatus){
   if((newStatus==='em_producao' || newStatus==='entregue') && !c.producaoStartDate) c.producaoStartDate = today;
   if(newStatus==='entregue' && !c.deliveredDate) c.deliveredDate = today;
   if(newStatus!=='entregue') c.deliveredDate = null;
-  const ok = await saveClients();
+  const ok = await saveClient(c);
   if(!ok) Object.assign(c, antes);
   renderPipeline();
 }

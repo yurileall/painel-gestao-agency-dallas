@@ -31,7 +31,7 @@ function renderDashboard(){
         ${recent.map(c=>`
           <tr class="client-row" data-id="${c.id}">
             <td><div class="cell-name">${escapeHtml(c.name)}</div><div class="cell-sub">${escapeHtml(c.niche||'—')}</div></td>
-            <td><span class="combo-tag">${COMBOS[c.combo]?.label||c.combo}</span></td>
+            <td><span class="combo-tag">${comboLabel(c.combo)}</span></td>
             <td>${statusBadge(c.status)}</td>
             <td class="mono" style="color:var(--text-dim);">${fmtDate(c.saleDate)}</td>
           </tr>`).join('')}

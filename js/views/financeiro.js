@@ -52,15 +52,18 @@ function renderFinanceiro(){
     inp.addEventListener('change', async ()=>{
       const m = inp.dataset.spendMonth;
       const val = parseFloat(inp.value);
-      if(!val && val!==0) delete adSpend[m]; else adSpend[m] = val;
-      await saveAdSpend();
+      const vazio = !val && val!==0;
+      const ok = vazio ? await deleteAdSpendMonth(m) : await saveAdSpendMonth(m, val);
+      if(!ok){ renderFinanceiro(); return; }   // recoloca o valor que estava
+      if(vazio) delete adSpend[m]; else adSpend[m] = val;
       renderFinanceiro();
     });
   });
   $$('#spendTableWrap [data-remove-month]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
-      delete adSpend[btn.dataset.removeMonth];
-      await saveAdSpend();
+      const m = btn.dataset.removeMonth;
+      if(!(await deleteAdSpendMonth(m))) return;
+      delete adSpend[m];
       renderFinanceiro();
     });
   });
@@ -82,8 +85,9 @@ function renderFinanceiro(){
 $('#btnAddSpendMonth').addEventListener('click', async ()=>{
   const val = $('#addSpendMonth').value;
   if(!val) return;
-  if(!(val in adSpend)) adSpend[val] = 0;
-  await saveAdSpend();
+  if(val in adSpend){ $('#addSpendMonth').value = ''; return; }
+  if(!(await saveAdSpendMonth(val, 0))) return;
+  adSpend[val] = 0;
   $('#addSpendMonth').value = '';
   renderFinanceiro();
 });

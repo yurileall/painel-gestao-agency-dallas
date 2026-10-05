@@ -11,25 +11,28 @@ async function loadAdSpend(){
     toast('Não foi possível carregar o gasto com tráfego: ' + dbErrorMessage(e), 'error');
   }
 }
-async function saveAdSpend(){
+/* Um mês por vez, mesmo motivo de saveClient(). */
+async function saveAdSpendMonth(month, amount){
   try{
-    const rows = Object.keys(adSpend).map(m=>({ month: m, amount: parseFloat(adSpend[m]) || 0 }));
-    if(rows.length){
-      const { error } = await supabaseClient.from('ad_spend').upsert(rows, { onConflict: 'month' });
-      if(error) throw error;
-    }
-    const { data: existing, error: selErr } = await supabaseClient.from('ad_spend').select('month');
-    if(selErr) throw selErr;
-    const localMonths = new Set(Object.keys(adSpend));
-    const toDelete = (existing || []).map(r=>r.month).filter(m=>!localMonths.has(m));
-    if(toDelete.length){
-      const { error: delErr } = await supabaseClient.from('ad_spend').delete().in('month', toDelete);
-      if(delErr) throw delErr;
-    }
+    const { error } = await supabaseClient.from('ad_spend')
+      .upsert({ month, amount: parseFloat(amount) || 0 }, { onConflict: 'month' });
+    if(error) throw error;
     return true;
   }catch(e){
     console.error('Falha ao salvar gasto com tráfego', e);
     toast('Não foi possível salvar o gasto com tráfego: ' + dbErrorMessage(e), 'error');
+    return false;
+  }
+}
+
+async function deleteAdSpendMonth(month){
+  try{
+    const { error } = await supabaseClient.from('ad_spend').delete().eq('month', month);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    console.error('Falha ao remover o mês', e);
+    toast('Não foi possível remover o mês: ' + dbErrorMessage(e), 'error');
     return false;
   }
 }

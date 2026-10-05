@@ -9,7 +9,7 @@ function kanbanCard(c){
       <span class="cell-name">${escapeHtml(c.name)}</span>
       <span class="aging-badge ${level}">${badgeTxt}</span>
     </div>
-    <div class="combo-tag">${COMBOS[c.combo]?.label||c.combo}</div>
+    <div class="combo-tag">${comboLabel(c.combo)}</div>
     <div class="kc-foot">
       <span class="mono" style="color:var(--text-dim); font-size:11.5px;">${fmtBRL(c.price)}</span>
       <div class="move-btns">
@@ -72,8 +72,9 @@ function renderPipeline(){
 
 $('#btnNewClientPipeline').addEventListener('click', ()=>openModal(null));
 $('#slaDaysInput').addEventListener('change', async (e)=>{
+  const anterior = slaDays;
   slaDays = Math.max(1, parseInt(e.target.value,10) || 3);
   e.target.value = slaDays;
-  await saveSettings();
+  if(!(await saveSettings())){ slaDays = anterior; e.target.value = anterior; }
   renderPipeline();
 });

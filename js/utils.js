@@ -15,6 +15,13 @@ function daysBetween(iso1, iso2){
 
 function uid(){ return 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
+/* Rótulo do combo pronto para ir ao HTML. O valor vem do banco como texto
+   livre, então o fallback precisa ser escapado. */
+function comboLabel(combo){
+  if(!combo) return 'Não decidiu';
+  return COMBOS[combo]?.label || escapeHtml(combo);
+}
+
 function statusBadge(status){
   return `<span class="badge ${status}"><span class="badge-dot"></span>${STATUS_LABELS[status]}</span>`;
 }

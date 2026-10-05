@@ -18,7 +18,7 @@ function renderLeadsTable(){
           const aging = leadAging(l);
           return `<tr class="client-row" data-lead-id="${l.id}">
             <td><div class="cell-name">${escapeHtml(l.name)}</div><div class="cell-sub">${escapeHtml(l.whatsapp||'sem whatsapp')}</div></td>
-            <td><span class="combo-tag">${l.combo ? (COMBOS[l.combo]?.label||l.combo) : 'Não decidiu'}</span></td>
+            <td><span class="combo-tag">${comboLabel(l.combo)}</span></td>
             <td class="mono" style="color:var(--text-dim);">${fmtDate(l.contactDate)}</td>
             <td><span class="aging-badge ${aging.level}">${aging.label}</span></td>
             <td class="cell-sub" style="max-width:220px;">${escapeHtml(l.notes||'—')}</td>

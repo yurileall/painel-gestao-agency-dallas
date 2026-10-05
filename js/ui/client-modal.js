@@ -1,8 +1,15 @@
 /* Modal de cliente (criar, editar, excluir) */
 // ---------- MODAL ----------
 const overlay = $('#clientOverlay');
+
+/* Lead que vira cliente ao salvar. Guardar o id aqui evita o truque de trocar
+   o onclick do botão salvar: aquela troca sobrevivia ao cancelamento e fazia
+   o PRÓXIMO cliente cadastrado apagar um lead que ninguém converteu. */
+let pendingLeadId = null;
+
 function openModal(client){
   editingId = client ? client.id : null;
+  pendingLeadId = null;
   $('#modalTitle').textContent = client ? 'Editar cliente' : 'Novo cliente';
   $('#fName').value = client?.name || '';
   $('#fWhats').value = client?.whatsapp || '';
@@ -20,7 +27,7 @@ function openModal(client){
 
   overlay.classList.add('open');
 }
-function closeModal(){ overlay.classList.remove('open'); editingId=null; }
+function closeModal(){ overlay.classList.remove('open'); editingId=null; pendingLeadId=null; }
 $('#closeModal').onclick = closeModal;
 $('#btnCancel').onclick = closeModal;
 overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
@@ -41,7 +48,7 @@ $$('.combo-opt').forEach(opt=>{
   });
 });
 
-function renderChecklist(existing, combo, resetPrice){
+function renderChecklist(existing, combo){
   const list = COMBOS[combo].deliverables;
   const wrap = $('#deliverablesChecklist');
   wrap.innerHTML = list.map(key=>{
@@ -104,12 +111,17 @@ $('#btnSave').onclick = async ()=>{
   const btn = $('#btnSave');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
-  const ok = await saveClients();
+  const ok = await saveClient(client);
   btn.disabled = false; btn.textContent = label;
 
   if(!ok){
     if(idx >= 0){ clients[idx] = anterior; } else { clients = clients.filter(c=>c!==client); }
     return false;
+  }
+  /* Veio do follow-up: só tira o lead depois que o cliente entrou no banco. */
+  if(pendingLeadId){
+    const leadId = pendingLeadId;
+    if(await deleteLead(leadId)) leads = leads.filter(l=>l.id!==leadId);
   }
   closeModal();
   renderAll();
@@ -118,10 +130,13 @@ $('#btnSave').onclick = async ()=>{
 
 $('#btnDelete').onclick = async ()=>{
   if(!editingId) return;
-  const anteriores = clients;
-  clients = clients.filter(c=>c.id!==editingId);
-  const ok = await saveClients();
-  if(!ok){ clients = anteriores; return; }
+  const id = editingId;
+  const alvo = clients.find(c=>c.id===id);
+  if(!confirm(`Excluir o cliente "${alvo?.name || ''}"? Isso não pode ser desfeito.`)) return;
+  /* Só tira da lista local depois que o banco confirmar a exclusão. */
+  const ok = await deleteClient(id);
+  if(!ok) return;
+  clients = clients.filter(c=>c.id!==id);
   closeModal();
   renderAll();
 };

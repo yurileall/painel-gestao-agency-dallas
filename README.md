@@ -55,6 +55,24 @@ o `insert` é recusado:
 Quando uma gravação falha, o painel mostra um aviso vermelho no canto da tela e
 o erro completo do Supabase aparece no console do navegador (F12 → Console).
 
+### Grave sempre um registro por vez
+
+As funções de escrita em `js/data/` (`saveClient`, `deleteClient`, `saveLead`,
+`deleteLead`, `saveAdSpendMonth`, `deleteAdSpendMonth`) mexem em **uma linha**,
+identificada pelo id. Isso não é detalhe de estilo.
+
+A versão anterior mandava o array local inteiro num `upsert` e, em seguida,
+apagava do banco todo id que não estivesse nesse array. Como o painel tem login
+e pode estar aberto em várias abas ou por várias pessoas, isso destruía dados:
+quem salvasse por último apagava o que o outro tinha acabado de cadastrar, sem
+erro nenhum. Duas abas da mesma pessoa bastavam.
+
+Se precisar de uma operação em lote, mande só as linhas afetadas — nunca derive
+exclusão de "o que falta na minha cópia local".
+
+As escritas preenchem `updated_at` com o horário do cliente. Não existe trigger
+no banco fazendo isso.
+
 ## Redefinição de senha
 
 A tela de login tem o link **Esqueci minha senha**. O fluxo usa o Supabase Auth:

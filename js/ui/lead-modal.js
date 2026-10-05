@@ -38,7 +38,7 @@ $('#btnSaveLead').onclick = async ()=>{
   const btn = $('#btnSaveLead');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
-  const ok = await saveLeads();
+  const ok = await saveLead(lead);
   btn.disabled = false; btn.textContent = label;
 
   if(!ok){
@@ -51,10 +51,12 @@ $('#btnSaveLead').onclick = async ()=>{
 
 $('#btnDeleteLead').onclick = async ()=>{
   if(!editingLeadId) return;
-  const anteriores = leads;
-  leads = leads.filter(l=>l.id!==editingLeadId);
-  const ok = await saveLeads();
-  if(!ok){ leads = anteriores; return; }
+  const id = editingLeadId;
+  const alvo = leads.find(l=>l.id===id);
+  if(!confirm(`Excluir o lead "${alvo?.name || ''}"? Isso não pode ser desfeito.`)) return;
+  const ok = await deleteLead(id);
+  if(!ok) return;
+  leads = leads.filter(l=>l.id!==id);
   closeLeadModal();
   renderLeadsTable();
 };
@@ -63,24 +65,14 @@ $('#btnConvertLead').onclick = ()=>{
   if(!editingLeadId) return;
   const lead = leads.find(l=>l.id===editingLeadId);
   if(!lead) return;
-  const leadId = lead.id;
   closeLeadModal();
   // abre o modal de cliente pré-preenchido com os dados do lead
   openModal(null);
   $('#fName').value = lead.name;
   $('#fWhats').value = lead.whatsapp;
   $('#fNiche').value = '';
-  if(lead.combo){ pickCombo(lead.combo, true); renderChecklist({}, lead.combo, true); }
+  if(lead.combo){ pickCombo(lead.combo, true); renderChecklist({}, lead.combo); }
   $('#fNotes').value = lead.notes ? `(Veio do follow-up) ${lead.notes}` : '';
-  // ao salvar o cliente, remove o lead da lista de follow-up
-  const originalSave = $('#btnSave').onclick;
-  $('#btnSave').onclick = async ()=>{
-    /* Só tira o lead do follow-up se o cliente realmente entrou no banco. */
-    const ok = await originalSave();
-    if(!ok) return;
-    leads = leads.filter(l=>l.id!==leadId);
-    await saveLeads();
-    renderLeadsTable();
-    $('#btnSave').onclick = originalSave;
-  };
+  // openModal() zerou o pendente; marca agora para o save consumir
+  pendingLeadId = lead.id;
 };

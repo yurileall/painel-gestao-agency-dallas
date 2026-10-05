@@ -37,25 +37,29 @@ async function loadLeads(){
     toast('Não foi possível carregar os leads: ' + dbErrorMessage(e), 'error');
   }
 }
-async function saveLeads(){
+/* Um lead por vez, mesmo motivo de saveClient(). */
+async function saveLead(lead){
   try{
-    const rows = leads.map(leadToRow);
-    if(rows.length){
-      const { error } = await supabaseClient.from('leads').upsert(rows, { onConflict: 'id' });
-      if(error) throw error;
-    }
-    const { data: existing, error: selErr } = await supabaseClient.from('leads').select('id');
-    if(selErr) throw selErr;
-    const localIds = new Set(leads.map(l=>l.id));
-    const toDelete = (existing || []).map(r=>r.id).filter(id=>!localIds.has(id));
-    if(toDelete.length){
-      const { error: delErr } = await supabaseClient.from('leads').delete().in('id', toDelete);
-      if(delErr) throw delErr;
-    }
+    const row = leadToRow(lead);
+    row.updated_at = new Date().toISOString();
+    const { error } = await supabaseClient.from('leads').upsert(row, { onConflict: 'id' });
+    if(error) throw error;
     return true;
   }catch(e){
-    console.error('Falha ao salvar leads', e);
+    console.error('Falha ao salvar lead', e);
     toast('Não foi possível salvar no banco: ' + dbErrorMessage(e), 'error');
+    return false;
+  }
+}
+
+async function deleteLead(id){
+  try{
+    const { error } = await supabaseClient.from('leads').delete().eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){
+    console.error('Falha ao excluir lead', e);
+    toast('Não foi possível excluir no banco: ' + dbErrorMessage(e), 'error');
     return false;
   }
 }

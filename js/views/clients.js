@@ -17,7 +17,7 @@ function renderClientsTable(){
         ${list.map(c=>`
           <tr class="client-row" data-id="${c.id}">
             <td><div class="cell-name">${escapeHtml(c.name)}</div><div class="cell-sub">${escapeHtml(c.niche||'—')} · ${escapeHtml(c.whatsapp||'sem whatsapp')}</div></td>
-            <td><span class="combo-tag">${COMBOS[c.combo]?.label||c.combo}</span></td>
+            <td><span class="combo-tag">${comboLabel(c.combo)}</span></td>
             <td>${escapeHtml(c.owner||'—')}</td>
             <td class="mono">${fmtBRL(c.price)}</td>
             <td>${statusBadge(c.status)}</td>
