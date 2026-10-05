@@ -85,3 +85,55 @@ create policy app_settings_authenticated on public.app_settings
   for all to authenticated using (true) with check (true);
 create policy ad_spend_authenticated on public.ad_spend
   for all to authenticated using (true) with check (true);
+
+-- ---------- REGRAS DE DADOS ----------
+-- O painel valida no navegador, mas quem tem login também alcança a API
+-- direto. Estas regras garantem o mínimo no próprio banco.
+-- "not valid": vale para o que for gravado daqui em diante, sem recusar o
+-- script por causa de alguma linha antiga fora da regra.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'clients_status_check' and conrelid = 'public.clients'::regclass) then
+    alter table public.clients add constraint clients_status_check
+      check (status in ('pendente', 'em_producao', 'entregue')) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'clients_price_check' and conrelid = 'public.clients'::regclass) then
+    alter table public.clients add constraint clients_price_check
+      check (price >= 0) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'clients_name_check' and conrelid = 'public.clients'::regclass) then
+    alter table public.clients add constraint clients_name_check
+      check (length(btrim(name)) > 0) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'leads_name_check' and conrelid = 'public.leads'::regclass) then
+    alter table public.leads add constraint leads_name_check
+      check (length(btrim(name)) > 0) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ad_spend_amount_check' and conrelid = 'public.ad_spend'::regclass) then
+    alter table public.ad_spend add constraint ad_spend_amount_check
+      check (amount >= 0) not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'app_settings_sla_check' and conrelid = 'public.app_settings'::regclass) then
+    alter table public.app_settings add constraint app_settings_sla_check
+      check (sla_days between 1 and 365) not valid;
+  end if;
+end $$;
+
+-- ---------- TEMPO REAL ----------
+-- Coloca as tabelas na publicação do Realtime, para o painel receber na hora
+-- o que outra pessoa gravou. Sem isto o painel continua funcionando, mas só
+-- atualiza ao voltar para a aba ou recarregar. O RLS acima também vale aqui:
+-- só quem está logado recebe os eventos.
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['clients', 'leads', 'app_settings', 'ad_spend'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;

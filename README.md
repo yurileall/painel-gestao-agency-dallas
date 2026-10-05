@@ -4,40 +4,83 @@ Painel de gestão da Agency Dallas. Site estático (HTML, CSS e JavaScript puro)
 
 ## Como rodar
 
-Abra o `index.html` no navegador. Não há etapa de build.
+Não há etapa de build, mas o painel precisa ser servido por HTTP — os scripts
+são módulos ES, e o navegador não carrega módulos de `file://`. Na pasta do
+projeto:
+
+```
+npx serve
+```
+
+(ou qualquer servidor estático). Em produção, basta publicar a pasta como site
+estático.
+
+## Testes
+
+```
+npm test
+```
+
+Roda os testes de `test/` com o executor embutido do Node (18 ou mais novo),
+sem instalar nada. Eles cobrem a lógica que não depende do navegador: datas,
+regras de prazo, validação, conversão de/para o banco e os cálculos das telas.
 
 ## Estrutura
 
 ```
-index.html              Marcação das telas e ordem de carregamento de estilos e scripts
+index.html              Marcação das telas
 assets/img/             Logos (logo.png = sidebar e favicon, logo-login.png = tela de login)
 css/
-  base.css              Fontes, variáveis de tema, reset e tipografia
+  base.css              Fontes, variáveis de tema, reset, foco e tipografia
   layout.css            Sidebar e área principal
-  components.css        KPIs, painéis, barras, tabela e modal
+  components.css        KPIs, painéis, barras, tabela, modal e avisos
   pipeline.css          Kanban
-  responsive.css        Telas pequenas
   auth.css              Tela de login
+  responsive.css        Telas pequenas (menu no topo, tabelas em cartões)
 js/
+  main.js               Ponto de entrada
   config.js             URL e chave pública do Supabase
-  state.js              Constantes do negócio (combos, status) e estado global
-  utils.js              Helpers de DOM, formatação, datas e HTML
-  data/                 Leitura e gravação no Supabase (clients, settings, ad-spend, leads)
-  ui/                   Modais de cliente e de lead, navegação
+  constants.js          Combos, entregáveis, status e responsáveis
+  store.js              Estado do app (clientes, leads, gasto, prazo) e notify()
+  lib/                  Lógica pura, sem DOM nem Supabase — é o que os testes cobrem
+    dates.js            Hoje, diferença em dias, mês
+    format.js           Moeda, data e escape de HTML
+    mappers.js          Tipos (Client, Lead) e conversão app <-> linha do banco
+    rules.js            Prazo (SLA), follow-up e datas que dependem do status
+    validate.js         Validação dos formulários
+    stats.js            Cálculos de cada tela
+    errors.js           Tradução dos erros do Supabase
+  data/                 Leitura e gravação no Supabase, e tempo real
+  ui/                   Helpers de DOM, modal base, modais de cliente e lead, navegação
   views/                Uma função de render por tela
-  app.js                renderAll, relógio e initApp
+  app.js                Desenho da tela ativa, carga inicial e sincronização
   auth.js               Login, logout, esqueci minha senha e sessão
+test/                   Testes de js/lib
 ```
 
-## Ordem dos scripts
+## Como as peças se falam
 
-Os scripts são clássicos (sem módulos) e compartilham o escopo global, então a ordem das tags em `index.html` importa. O `auth.js` precisa ser o último, porque ele chama `initApp()` assim que a sessão é confirmada.
+- **Estado**: tudo fica em `state` (`js/store.js`). Quem altera chama
+  `notify()`, e o `app.js` redesenha só a tela que está visível.
+- **Gravação**: cada operação mexe em uma linha (`saveClient`, `deleteLead`,
+  `setAdSpend`...) e devolve `{ ok }` ou `{ ok:false, message }`. A tela só
+  muda depois que o banco confirma. Não existe "salvar a lista inteira": isso
+  apagaria o que outra pessoa cadastrou enquanto a sua aba estava aberta.
+- **Tempo real**: o painel assina as mudanças das quatro tabelas
+  (`js/data/realtime.js`), então o que uma pessoa grava aparece para a outra
+  sem recarregar. Como rede de segurança, ao voltar para a aba depois de um
+  minuto os dados são buscados de novo. Se duas pessoas editarem o mesmo
+  cliente ao mesmo tempo, vale a última gravação.
+- **Validação**: `js/lib/validate.js` confere os formulários antes de gravar e
+  mostra o erro embaixo do campo. O banco repete o mínimo (ver `schema.sql`).
 
 ## Banco (Supabase)
 
 O SQL do banco está em `supabase/`:
 
-- `supabase/schema.sql` — tabelas, GRANTs e políticas de RLS. Idempotente.
+- `supabase/schema.sql` — tabelas, GRANTs, políticas de RLS, regras de dados
+  (status válido, valores não negativos) e publicação do tempo real. Idempotente:
+  rode de novo no SQL Editor sempre que este arquivo mudar.
 - `supabase/diagnostico.sql` — consultas de leitura para descobrir por que uma
   gravação não chegou ao banco (tipo das colunas, GRANTs, RLS, contagem de linhas).
 
@@ -49,11 +92,17 @@ o `insert` é recusado:
 2. **Política de RLS** para `authenticated`. Com RLS ligado e nenhuma política,
    nada entra e nada é lido.
 3. **`clients.id` e `leads.id` como `text`.** O painel gera ids no formato
-   `c_mabc123xy` (veja `uid()` em `js/utils.js`). Se a coluna for `uuid`, todo
+   `c_mabc123xy` (veja `newId()` em `js/lib/mappers.js`). Se a coluna for `uuid`, todo
    insert falha com `22P02 invalid input syntax for type uuid`.
 
-Quando uma gravação falha, o painel mostra um aviso vermelho no canto da tela e
-o erro completo do Supabase aparece no console do navegador (F12 → Console).
+Quando uma gravação falha, o painel avisa na tela — dentro do modal, mantendo o
+que foi digitado, ou num aviso vermelho com "Tentar de novo" — e o erro completo
+do Supabase aparece no console do navegador (F12 → Console). Falha de rede é
+repetida sozinha duas vezes antes de avisar.
+
+Para o tempo real funcionar, as tabelas precisam estar na publicação
+`supabase_realtime` (o fim do `schema.sql` faz isso). Sem isso o painel funciona
+normalmente, mas só mostra o que outra pessoa gravou ao voltar para a aba.
 
 ### Grave sempre um registro por vez
 
@@ -89,6 +138,5 @@ Para funcionar, duas coisas precisam estar configuradas no painel do Supabase:
    mas tem limite baixo de envios por hora. Para uso real, configure um SMTP
    próprio em *Project Settings → Authentication → SMTP Settings*.
 
-Abrir o `index.html` direto do disco (`file://`) não funciona para esse fluxo,
-porque não existe uma URL que o Supabase possa liberar. Use um servidor local
-(`python -m http.server`) ou o endereço de produção.
+Para testar esse fluxo localmente, o endereço do servidor local (ex.:
+`http://localhost:3000/index.html`) também precisa estar em *Redirect URLs*.

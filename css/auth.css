@@ -15,7 +15,7 @@ body.authed #loginScreen{ display:none; }
 }
 .login-brand{ display:flex; align-items:center; gap:10px; margin-bottom:26px; }
 .login-brand .brand-mark{ width:34px; height:34px; }
-.login-title{ font-size:18px; font-weight:700; margin-bottom:4px; }
+.login-title{ font-family:inherit; letter-spacing:normal; font-size:18px; font-weight:700; margin-bottom:4px; }
 .login-sub{ color:var(--text-dim); font-size:12.5px; margin-bottom:22px; }
 .login-field{ margin-bottom:14px; }
 .login-field label{ display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:500; }

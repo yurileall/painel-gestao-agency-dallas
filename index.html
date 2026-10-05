@@ -11,8 +11,8 @@
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/pipeline.css">
-<link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/responsive.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
@@ -22,21 +22,21 @@
      TELA DE LOGIN (Supabase Auth)
      ======================================================== -->
 <div id="loginScreen">
-  <div class="login-card">
+  <main class="login-card">
     <div class="login-brand">
-      <div class="brand-mark"><img src="assets/img/logo-login.png" alt="Agency Dallas"></div>
+      <div class="brand-mark"><img src="assets/img/logo-login.png" alt=""></div>
       <div>
         <div class="brand-name">AGENCY DALLAS</div>
         <div class="brand-sub mono">PAINEL DE GESTÃO</div>
       </div>
     </div>
 
-    <div class="login-error" id="loginError"></div>
-    <div class="login-ok" id="loginOk"></div>
+    <div class="login-error" id="loginError" role="alert"></div>
+    <div class="login-ok" id="loginOk" role="status"></div>
 
     <!-- Painel 1: entrar -->
     <div class="auth-panel" id="loginPanel">
-      <div class="login-title">Acesso restrito</div>
+      <h1 class="login-title">Acesso restrito</h1>
       <div class="login-sub">Entre com seu e-mail e senha cadastrados para acessar o painel.</div>
 
       <form id="loginForm">
@@ -55,7 +55,7 @@
 
     <!-- Painel 2: pedir o link de redefinição por e-mail -->
     <div class="auth-panel" id="forgotPanel" hidden>
-      <div class="login-title">Redefinir senha</div>
+      <h1 class="login-title">Redefinir senha</h1>
       <div class="login-sub">Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.</div>
 
       <form id="forgotForm">
@@ -70,7 +70,7 @@
 
     <!-- Painel 3: criar a nova senha (abre ao voltar do link do e-mail) -->
     <div class="auth-panel" id="resetPanel" hidden>
-      <div class="login-title">Criar nova senha</div>
+      <h1 class="login-title">Criar nova senha</h1>
       <div class="login-sub">Escolha uma nova senha de no mínimo 8 caracteres para a sua conta.</div>
 
       <form id="resetForm">
@@ -88,7 +88,7 @@
     </div>
 
     <div class="login-foot mono">ACESSO PRIVADO · AGENCY DALLAS</div>
-  </div>
+  </main>
 </div>
 
 <!-- ========================================================
@@ -96,64 +96,70 @@
      ======================================================== -->
 <div id="appRoot">
 <div class="app">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
+  <!-- SIDEBAR (vira barra no topo em telas pequenas) -->
+  <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark"><img src="assets/img/logo.png" alt="Agency Dallas"></div>
+      <div class="brand-mark"><img src="assets/img/logo.png" alt=""></div>
       <div>
         <div class="brand-name">AGENCY DALLAS</div>
         <div class="brand-sub mono">PAINEL DE GESTÃO</div>
       </div>
     </div>
-    <div class="nav">
-      <button class="nav-item active" data-view="dashboard">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    <nav class="nav" aria-label="Seções do painel">
+      <button type="button" class="nav-item active" data-view="dashboard" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Dashboard
       </button>
-      <button class="nav-item" data-view="pipeline">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.3" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5.5" height="7" rx="1.5"/></svg>
+      <button type="button" class="nav-item" data-view="pipeline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.3" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5.5" height="7" rx="1.5"/></svg>
         Pipeline
       </button>
-      <button class="nav-item" data-view="followup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      <button type="button" class="nav-item" data-view="followup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
         Follow-up
       </button>
-      <button class="nav-item" data-view="clientes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="8.5" r="2.4"/><path d="M15.5 14.3c2.6.4 4.5 2.6 4.5 5.7"/></svg>
+      <button type="button" class="nav-item" data-view="clientes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="8.5" r="2.4"/><path d="M15.5 14.3c2.6.4 4.5 2.6 4.5 5.7"/></svg>
         Clientes
       </button>
-      <button class="nav-item" data-view="financeiro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17l5-5.5 4 3L21 6"/><path d="M15 6h6v6"/></svg>
+      <button type="button" class="nav-item" data-view="financeiro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 17l5-5.5 4 3L21 6"/><path d="M15 6h6v6"/></svg>
         Financeiro
       </button>
-      <button class="nav-item" data-view="metricas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V10M11 19V5M18 19v-7"/><circle cx="4" cy="8" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="18" cy="10" r="1.4"/></svg>
+      <button type="button" class="nav-item" data-view="metricas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 19V10M11 19V5M18 19v-7"/><circle cx="4" cy="8" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="18" cy="10" r="1.4"/></svg>
         Métricas
       </button>
-    </div>
+    </nav>
     <div class="sidebar-foot">
       <div class="sidebar-user">
         <span class="sidebar-user-email mono" id="sidebarUserEmail">—</span>
-        <button class="logout-btn" id="btnLogout" title="Sair">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <button type="button" class="logout-btn" id="btnLogout" title="Sair" aria-label="Sair">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
         </button>
       </div>
       <div class="clock" id="clock">—</div>
     </div>
-  </div>
+  </aside>
 
   <!-- MAIN -->
-  <div class="main">
+  <main class="main">
+
+    <div class="load-status" role="status">Carregando dados…</div>
+    <div class="load-error" id="loadError" role="alert" hidden>
+      <span id="loadErrorMsg"></span>
+      <button type="button" class="btn" id="btnRetryLoad">Tentar de novo</button>
+    </div>
 
     <!-- DASHBOARD -->
-    <div class="view active" id="view-dashboard">
+    <section class="view active" id="view-dashboard">
       <div class="topbar">
         <div>
-          <div class="page-title">Dashboard</div>
+          <h1 class="page-title">Dashboard</h1>
           <div class="page-sub">Visão geral da operação — atualizado em tempo real.</div>
         </div>
         <div class="topbar-actions">
-          <select class="select" id="monthFilter"></select>
+          <select class="select" id="monthFilter" aria-label="Período"></select>
         </div>
       </div>
 
@@ -182,30 +188,30 @@
 
       <div class="two-col">
         <div class="panel">
-          <div class="panel-head"><h3>Últimas entregas</h3></div>
+          <div class="panel-head"><h2>Últimas entregas</h2></div>
           <div id="recentTableWrap"></div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h3>Combos vendidos</h3></div>
+          <div class="panel-head"><h2>Combos vendidos</h2></div>
           <div class="panel-body" id="comboBars"></div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- PIPELINE -->
-    <div class="view" id="view-pipeline">
+    <section class="view" id="view-pipeline">
       <div class="topbar">
         <div>
-          <div class="page-title">Pipeline</div>
+          <h1 class="page-title">Pipeline</h1>
           <div class="page-sub">Do fechamento até a entrega — nada passa batido.</div>
         </div>
         <div class="topbar-actions">
           <div class="sla-box">
-            <label>Prazo (dias)</label>
-            <input type="number" id="slaDaysInput" min="1" value="3">
+            <label for="slaDaysInput">Prazo (dias)</label>
+            <input type="number" id="slaDaysInput" min="1" max="365" value="3">
           </div>
-          <button class="new-client-btn" style="width:auto;padding:9px 16px;" id="btnNewClientPipeline">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          <button type="button" class="new-client-btn compact" id="btnNewClientPipeline" data-action="new-client">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Cliente fechou
           </button>
         </div>
@@ -236,30 +242,30 @@
 
       <div class="kanban-board" id="kanbanBoard">
         <div class="kanban-col" data-status="pendente">
-          <div class="kanban-col-head">Em espera <span class="count" id="countPendente">0</span></div>
+          <h2 class="kanban-col-head">Em espera <span class="count" id="countPendente">0</span></h2>
           <div class="kanban-cards" id="colPendente"></div>
         </div>
         <div class="kanban-col" data-status="em_producao">
-          <div class="kanban-col-head">Em produção <span class="count" id="countProducao">0</span></div>
+          <h2 class="kanban-col-head">Em produção <span class="count" id="countProducao">0</span></h2>
           <div class="kanban-cards" id="colProducao"></div>
         </div>
         <div class="kanban-col" data-status="entregue">
-          <div class="kanban-col-head">Prontos <span class="count" id="countEntregue">0</span></div>
+          <h2 class="kanban-col-head">Prontos <span class="count" id="countEntregue">0</span></h2>
           <div class="kanban-cards" id="colEntregue"></div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- FOLLOW-UP -->
-    <div class="view" id="view-followup">
+    <section class="view" id="view-followup">
       <div class="topbar">
         <div>
-          <div class="page-title">Follow-up</div>
+          <h1 class="page-title">Follow-up</h1>
           <div class="page-sub">Leads com interesse mas sem dinheiro agora — guarde aqui pra chamar depois.</div>
         </div>
         <div class="topbar-actions">
-          <button class="new-client-btn" style="width:auto;padding:9px 16px;" id="btnNewLead">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          <button type="button" class="new-client-btn compact" id="btnNewLead" data-action="new-lead">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Novo lead
           </button>
         </div>
@@ -281,49 +287,39 @@
       <div class="panel">
         <div id="leadsTableWrap"></div>
       </div>
-    </div>
+    </section>
 
     <!-- CLIENTES -->
-    <div class="view" id="view-clientes">
+    <section class="view" id="view-clientes">
       <div class="topbar">
         <div>
-          <div class="page-title">Clientes</div>
+          <h1 class="page-title">Clientes</h1>
           <div class="page-sub">Todos os projetos vendidos e o status de cada entrega.</div>
         </div>
         <div class="topbar-actions">
-          <input class="search" id="searchInput" placeholder="Buscar cliente...">
-          <button class="new-client-btn" style="width:auto;padding:9px 16px;" id="btnNewClientTop">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          <input type="search" class="search" id="searchInput" placeholder="Buscar cliente..." aria-label="Buscar cliente por nome ou nicho">
+          <button type="button" class="new-client-btn compact" id="btnNewClientTop" data-action="new-client">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Novo
           </button>
         </div>
       </div>
 
       <div class="filters-row">
-        <select class="select" id="statusFilter">
-          <option value="">Todos os status</option>
-          <option value="pendente">Em espera</option>
-          <option value="em_producao">Em produção</option>
-          <option value="entregue">Pronto</option>
-        </select>
-        <select class="select" id="comboFilter">
-          <option value="">Todos os combos</option>
-          <option value="basico">Básico que Funciona</option>
-          <option value="presenca">Presença Digital</option>
-          <option value="autoridade">Kit Autoridade Local</option>
-        </select>
+        <select class="select" id="statusFilter" aria-label="Filtrar por status"></select>
+        <select class="select" id="comboFilter" aria-label="Filtrar por combo"></select>
       </div>
 
       <div class="panel">
         <div id="clientsTableWrap"></div>
       </div>
-    </div>
+    </section>
 
     <!-- FINANCEIRO -->
-    <div class="view" id="view-financeiro">
+    <section class="view" id="view-financeiro">
       <div class="topbar">
         <div>
-          <div class="page-title">Financeiro</div>
+          <h1 class="page-title">Financeiro</h1>
           <div class="page-sub">Faturamento, gasto com tráfego e CPA por mês.</div>
         </div>
       </div>
@@ -353,26 +349,26 @@
 
       <div class="panel">
         <div class="panel-head">
-          <h3>Tráfego, CPA e faturamento por mês</h3>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="month" class="select" id="addSpendMonth" style="padding:8px 10px;">
-            <button class="btn" id="btnAddSpendMonth" style="padding:8px 14px;">+ Adicionar mês</button>
+          <h2>Tráfego, CPA e faturamento por mês</h2>
+          <div class="panel-actions">
+            <input type="month" class="select" id="addSpendMonth" aria-label="Mês a adicionar">
+            <button type="button" class="btn" id="btnAddSpendMonth">+ Adicionar mês</button>
           </div>
         </div>
         <div id="spendTableWrap"></div>
       </div>
 
       <div class="panel">
-        <div class="panel-head"><h3>Receita por combo (total)</h3></div>
+        <div class="panel-head"><h2>Receita por combo (total)</h2></div>
         <div class="panel-body" id="revenueByCombo"></div>
       </div>
-    </div>
+    </section>
 
     <!-- METRICAS -->
-    <div class="view" id="view-metricas">
+    <section class="view" id="view-metricas">
       <div class="topbar">
         <div>
-          <div class="page-title">Métricas</div>
+          <h1 class="page-title">Métricas</h1>
           <div class="page-sub">Velocidade e saúde da operação — não é sobre dinheiro, é sobre ritmo.</div>
         </div>
       </div>
@@ -402,177 +398,158 @@
 
       <div class="two-col">
         <div class="panel">
-          <div class="panel-head"><h3>Evolução mensal de vendas</h3></div>
+          <div class="panel-head"><h2>Evolução mensal de vendas</h2></div>
           <div class="panel-body" id="metMonthly"></div>
-          <div class="panel-body" style="padding-top:0; color:var(--text-faint); font-size:11.5px;">Quantos clientes fecharam por mês — pra ver se tá crescendo, estável ou caindo.</div>
+          <div class="panel-body panel-note">Quantos clientes fecharam por mês — pra ver se tá crescendo, estável ou caindo.</div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h3>Carga por responsável (em aberto)</h3></div>
+          <div class="panel-head"><h2>Carga por responsável (em aberto)</h2></div>
           <div class="panel-body" id="metOwnerLoad"></div>
-          <div class="panel-body" style="padding-top:0; color:var(--text-faint); font-size:11.5px;">Quantos clientes cada um tem pra entregar agora, pra não sobrecarregar um só.</div>
+          <div class="panel-body panel-note">Quantos clientes cada um tem pra entregar agora, pra não sobrecarregar um só.</div>
         </div>
       </div>
-    </div>
+    </section>
 
-  </div>
+  </main>
 </div>
 
 <!-- MODAL: NOVO/EDITAR CLIENTE -->
 <div class="overlay" id="clientOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
-      <h3 id="modalTitle">Novo cliente</h3>
-      <button class="close-btn" id="closeModal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <h2 id="modalTitle">Novo cliente</h2>
+      <button type="button" class="close-btn" id="closeModal" aria-label="Fechar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="field">
-        <label>Nome do cliente / negócio</label>
-        <input type="text" id="fName" placeholder="Ex: Dra. Evelyn Fernanda">
+        <label for="fName">Nome do cliente / negócio</label>
+        <input type="text" id="fName" maxlength="120" required placeholder="Ex: Dra. Evelyn Fernanda">
       </div>
       <div class="field-row">
         <div class="field">
-          <label>WhatsApp</label>
-          <input type="text" id="fWhats" placeholder="(71) 9xxxx-xxxx">
+          <label for="fWhats">WhatsApp</label>
+          <input type="tel" id="fWhats" placeholder="(71) 9xxxx-xxxx">
         </div>
         <div class="field">
-          <label>Nicho</label>
+          <label for="fNiche">Nicho</label>
           <input type="text" id="fNiche" placeholder="Ex: Psicologia, Advocacia...">
         </div>
       </div>
 
       <div class="field">
-        <label>Combo</label>
-        <div class="combo-pick" id="comboPick">
-          <div class="combo-opt" data-combo="basico"><div class="cn">Básico que Funciona</div><div class="cp mono">R$ 197,90</div></div>
-          <div class="combo-opt" data-combo="presenca"><div class="cn">Presença Digital</div><div class="cp mono">R$ 297,00</div></div>
-          <div class="combo-opt" data-combo="autoridade"><div class="cn">Kit Autoridade Local</div><div class="cp mono">R$ 397,00</div></div>
+        <span class="field-label" id="comboPickLabel">Combo</span>
+        <div class="combo-pick" id="comboPick" role="group" aria-labelledby="comboPickLabel"></div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="fPrice">Valor cobrado (R$)</label>
+          <input type="number" id="fPrice" min="0" step="0.01" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label for="fDate">Data da venda</label>
+          <input type="date" id="fDate" required>
         </div>
       </div>
 
       <div class="field-row">
         <div class="field">
-          <label>Valor cobrado (R$)</label>
-          <input type="number" id="fPrice" step="0.01" placeholder="0,00">
+          <label for="fOwner">Responsável</label>
+          <select id="fOwner"></select>
         </div>
         <div class="field">
-          <label>Data da venda</label>
-          <input type="date" id="fDate">
-        </div>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label>Responsável</label>
-          <select id="fOwner">
-            <option value="Breno">Breno</option>
-            <option value="Yuri">Yuri</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <select id="fStatus">
-            <option value="pendente">Em espera</option>
-            <option value="em_producao">Em produção</option>
-            <option value="entregue">Pronto</option>
-          </select>
+          <label for="fStatus">Status</label>
+          <select id="fStatus"></select>
         </div>
       </div>
 
       <div class="field">
-        <label>Checklist de entregáveis</label>
-        <div class="checklist" id="deliverablesChecklist"></div>
+        <span class="field-label" id="checklistLabel">Checklist de entregáveis</span>
+        <div class="checklist" id="deliverablesChecklist" role="group" aria-labelledby="checklistLabel"></div>
       </div>
 
       <div class="field">
-        <label>Observações</label>
+        <label for="fNotes">Observações</label>
         <textarea id="fNotes" placeholder="Anotações internas sobre o projeto..."></textarea>
       </div>
+
+      <div class="form-error" role="alert" hidden></div>
     </div>
     <div class="modal-foot">
-      <button class="btn danger" id="btnDelete" style="display:none;">Excluir cliente</button>
-      <div style="flex:1;"></div>
-      <button class="btn" id="btnCancel">Cancelar</button>
-      <button class="btn primary" id="btnSave">Salvar cliente</button>
+      <button type="button" class="btn danger" id="btnDelete" hidden>Excluir cliente</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="btnCancel">Cancelar</button>
+      <button type="button" class="btn primary" id="btnSave">Salvar cliente</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL: LEAD (FOLLOW-UP) -->
 <div class="overlay" id="leadOverlay">
-  <div class="modal" style="width:460px;">
+  <div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="leadModalTitle">
     <div class="modal-head">
-      <h3 id="leadModalTitle">Novo lead</h3>
-      <button class="close-btn" id="closeLeadModal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <h2 id="leadModalTitle">Novo lead</h2>
+      <button type="button" class="close-btn" id="closeLeadModal" aria-label="Fechar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="field">
-        <label>Nome do lead / negócio</label>
-        <input type="text" id="lName" placeholder="Ex: Barbearia do Zé">
+        <label for="lName">Nome do lead / negócio</label>
+        <input type="text" id="lName" maxlength="120" required placeholder="Ex: Barbearia do Zé">
       </div>
       <div class="field-row">
         <div class="field">
-          <label>WhatsApp</label>
-          <input type="text" id="lWhats" placeholder="(71) 9xxxx-xxxx">
+          <label for="lWhats">WhatsApp</label>
+          <input type="tel" id="lWhats" placeholder="(71) 9xxxx-xxxx">
         </div>
         <div class="field">
-          <label>Combo de interesse</label>
-          <select id="lCombo">
-            <option value="">Ainda não decidiu</option>
-            <option value="basico">Básico que Funciona</option>
-            <option value="presenca">Presença Digital</option>
-            <option value="autoridade">Kit Autoridade Local</option>
-          </select>
+          <label for="lCombo">Combo de interesse</label>
+          <select id="lCombo"></select>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Data do contato</label>
-          <input type="date" id="lContactDate">
+          <label for="lContactDate">Data do contato</label>
+          <input type="date" id="lContactDate" required>
         </div>
         <div class="field">
-          <label>Chamar novamente em</label>
+          <label for="lFollowUpDate">Chamar novamente em</label>
           <input type="date" id="lFollowUpDate">
         </div>
       </div>
       <div class="field">
-        <label>Observação</label>
+        <label for="lNotes">Observação</label>
         <textarea id="lNotes" placeholder="Ex: gostou do combo, mas só recebe no fim do mês..."></textarea>
       </div>
+
+      <div class="form-error" role="alert" hidden></div>
     </div>
     <div class="modal-foot">
-      <button class="btn danger" id="btnDeleteLead" style="display:none;">Excluir lead</button>
-      <div style="flex:1;"></div>
-      <button class="btn" id="btnCancelLead">Cancelar</button>
-      <button class="btn primary" id="btnConvertLead" style="display:none; background:var(--ok); border-color:var(--ok); color:#0a0a0a;">Converter em cliente ✓</button>
-      <button class="btn primary" id="btnSaveLead">Salvar lead</button>
+      <button type="button" class="btn danger" id="btnDeleteLead" hidden>Excluir lead</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="btnCancelLead">Cancelar</button>
+      <button type="button" class="btn primary convert" id="btnConvertLead" hidden>Converter em cliente ✓</button>
+      <button type="button" class="btn primary" id="btnSaveLead">Salvar lead</button>
     </div>
   </div>
 </div>
 
 </div><!-- /#appRoot -->
 
-<!-- Scripts (a ordem importa: cada arquivo usa o que os anteriores definem) -->
-<script src="js/config.js"></script>
-<script src="js/state.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/data/clients.js"></script>
-<script src="js/data/settings.js"></script>
-<script src="js/data/ad-spend.js"></script>
-<script src="js/data/leads.js"></script>
-<script src="js/ui/client-modal.js"></script>
-<script src="js/ui/lead-modal.js"></script>
-<script src="js/ui/nav.js"></script>
-<script src="js/views/dashboard.js"></script>
-<script src="js/views/pipeline.js"></script>
-<script src="js/views/clients.js"></script>
-<script src="js/views/financeiro.js"></script>
-<script src="js/views/metrics.js"></script>
-<script src="js/views/leads.js"></script>
-<script src="js/app.js"></script>
-<script src="js/auth.js"></script>
+<!-- Avisos (toasts). Fica fora do #appRoot para ser lido por leitores de tela em qualquer tela. -->
+<div class="toast-wrap" id="toastWrap" role="status" aria-live="polite"></div>
+
+<!-- Módulos ES não carregam de file://. Sem este aviso a tela de login ficaria muda. -->
+<script>
+  if(location.protocol === 'file:'){
+    var aviso = document.getElementById('loginError');
+    aviso.textContent = 'Abra o painel por um servidor (ex.: "npx serve" nesta pasta), e não direto do arquivo. O navegador bloqueia os scripts em file://.';
+    aviso.classList.add('show');
+  }
+</script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

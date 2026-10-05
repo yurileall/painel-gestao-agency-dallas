@@ -1,93 +1,85 @@
 /* Tela: Financeiro */
-function renderFinanceiro(){
-  const revByMonth = {};
-  const countByMonth = {};
-  clients.forEach(c=>{
-    const k = monthKey(c.saleDate);
-    if(!k) return;
-    revByMonth[k] = (revByMonth[k]||0) + (c.price||0);
-    countByMonth[k] = (countByMonth[k]||0) + 1;
-  });
+import { COMBOS } from '../constants.js';
+import { state } from '../store.js';
+import { removeAdSpend, setAdSpend } from '../data/ad-spend.js';
+import { monthKey, monthLabel, todayISO } from '../lib/dates.js';
+import { fmtBRL } from '../lib/format.js';
+import { financeStats } from '../lib/stats.js';
+import { $, barRow, toast } from '../ui/dom.js';
 
-  const months = Array.from(new Set([...Object.keys(revByMonth), ...Object.keys(adSpend), monthKey(new Date().toISOString().slice(0,10))])).sort().reverse();
+const wrap = $('#spendTableWrap');
+const fmtRoas = roas => roas === null ? '—' : roas.toFixed(2) + 'x';
 
-  // KPI totals
-  const totalRevenue = Object.values(revByMonth).reduce((a,b)=>a+b,0);
-  const totalSpend = Object.values(adSpend).reduce((a,b)=>a+(parseFloat(b)||0),0);
-  const totalDeals = clients.length;
-  $('#finRevenue').innerHTML = fmtBRL(totalRevenue);
-  $('#finSpend').innerHTML = fmtBRL(totalSpend);
-  $('#finCpa').innerHTML = totalDeals>0 && totalSpend>0 ? fmtBRL(totalSpend/totalDeals) : '—';
-  $('#finRoas').textContent = totalSpend>0 ? (totalRevenue/totalSpend).toFixed(2)+'x' : '—';
+export function renderFinanceiro(){
+  const s = financeStats(state.clients, state.adSpend, monthKey(todayISO()));
 
-  // month table
-  $('#spendTableWrap').innerHTML = months.length ? `
+  $('#finRevenue').textContent = fmtBRL(s.totalRevenue);
+  $('#finSpend').textContent = fmtBRL(s.totalSpend);
+  $('#finCpa').textContent = s.cpa === null ? '—' : fmtBRL(s.cpa);
+  $('#finRoas').textContent = fmtRoas(s.roas);
+
+  wrap.innerHTML = `
     <table>
-      <thead><tr><th>Mês</th><th>Vendas</th><th>Faturamento</th><th>Gasto c/ tráfego</th><th>CPA</th><th>Lucro</th><th>ROAS</th><th></th></tr></thead>
+      <thead><tr><th>Mês</th><th>Vendas</th><th>Faturamento</th><th>Gasto c/ tráfego</th><th>CPA</th><th>Lucro</th><th>ROAS</th><th><span class="sr-only">Ações</span></th></tr></thead>
       <tbody>
-        ${months.map(m=>{
-          const rev = revByMonth[m]||0;
-          const deals = countByMonth[m]||0;
-          const spend = parseFloat(adSpend[m]) || 0;
-          const cpa = deals>0 && spend>0 ? fmtBRL(spend/deals) : '—';
-          const profit = rev - spend;
-          const roas = spend>0 ? (rev/spend).toFixed(2)+'x' : '—';
+        ${s.months.map(m => {
+          const label = monthLabel(m.month);
           return `<tr>
-            <td class="cell-name">${monthLabel(m)}</td>
-            <td class="mono">${deals}</td>
-            <td class="mono">${fmtBRL(rev)}</td>
-            <td><input type="number" class="inline-input" data-spend-month="${m}" step="0.01" value="${spend||''}" placeholder="0,00"></td>
-            <td class="mono" style="color:var(--text-dim);">${cpa}</td>
-            <td class="mono" style="color:${profit>=0?'var(--ok)':'var(--danger)'};">${fmtBRL(profit)}</td>
-            <td class="mono" style="color:var(--text-dim);">${roas}</td>
-            <td><button class="remove-month" data-remove-month="${m}" title="Remover mês">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <td class="cell-name">${label}</td>
+            <td data-label="Vendas" class="mono">${m.deals}</td>
+            <td data-label="Faturamento" class="mono">${fmtBRL(m.revenue)}</td>
+            <td data-label="Gasto c/ tráfego"><input type="number" class="inline-input" data-spend-month="${m.month}" data-fk="spend:${m.month}" min="0" step="0.01" value="${m.spend || ''}" placeholder="0,00" aria-label="Gasto com tráfego em ${label}"></td>
+            <td data-label="CPA" class="mono dim">${m.cpa === null ? '—' : fmtBRL(m.cpa)}</td>
+            <td data-label="Lucro" class="mono ${m.profit >= 0 ? 'pos' : 'neg'}">${fmtBRL(m.profit)}</td>
+            <td data-label="ROAS" class="mono dim">${fmtRoas(m.roas)}</td>
+            <td data-label="Remover"><button type="button" class="remove-month" data-remove-month="${m.month}" data-fk="rm:${m.month}" title="Remover gasto de ${label}" aria-label="Remover gasto de ${label}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button></td>
           </tr>`;
         }).join('')}
       </tbody>
-    </table>` : emptyState('Nenhum dado ainda. Adicione um mês para lançar o gasto com tráfego.');
+    </table>`;
 
-  $$('#spendTableWrap [data-spend-month]').forEach(inp=>{
-    inp.addEventListener('change', async ()=>{
-      const m = inp.dataset.spendMonth;
-      const val = parseFloat(inp.value);
-      const vazio = !val && val!==0;
-      const ok = vazio ? await deleteAdSpendMonth(m) : await saveAdSpendMonth(m, val);
-      if(!ok){ renderFinanceiro(); return; }   // recoloca o valor que estava
-      if(vazio) delete adSpend[m]; else adSpend[m] = val;
-      renderFinanceiro();
-    });
-  });
-  $$('#spendTableWrap [data-remove-month]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const m = btn.dataset.removeMonth;
-      if(!(await deleteAdSpendMonth(m))) return;
-      delete adSpend[m];
-      renderFinanceiro();
-    });
-  });
-
-  // revenue by combo (all-time)
-  const byCombo = { basico:0, presenca:0, autoridade:0 };
-  clients.forEach(c=> byCombo[c.combo] = (byCombo[c.combo]||0) + (c.price||0));
-  const maxCombo = Math.max(...Object.values(byCombo), 1);
-  $('#revenueByCombo').innerHTML = Object.keys(COMBOS).map(k=>{
-    const pct = Math.round((byCombo[k]/maxCombo)*100);
-    return `<div class="combo-bar-row">
-      <div class="combo-bar-label">${COMBOS[k].label}</div>
-      <div class="combo-bar-track"><div class="combo-bar-fill" style="width:${pct}%"></div></div>
-      <div class="combo-bar-val mono" style="width:80px;">${fmtBRL(byCombo[k])}</div>
-    </div>`;
-  }).join('');
+  const maxCombo = Math.max(...Object.values(s.byCombo), 1);
+  $('#revenueByCombo').innerHTML = Object.keys(COMBOS).map(k =>
+    barRow(COMBOS[k].label, Math.round(s.byCombo[k] / maxCombo * 100), fmtBRL(s.byCombo[k]), 'wide')).join('');
 }
 
-$('#btnAddSpendMonth').addEventListener('click', async ()=>{
-  const val = $('#addSpendMonth').value;
-  if(!val) return;
-  if(val in adSpend){ $('#addSpendMonth').value = ''; return; }
-  if(!(await saveAdSpendMonth(val, 0))) return;
-  adSpend[val] = 0;
-  $('#addSpendMonth').value = '';
+/** Mostra o erro e redesenha, para a tabela voltar a refletir o que está salvo. */
+function failed(action, res){
+  toast(`Não foi possível ${action}: ${res.message}`, 'error');
   renderFinanceiro();
+}
+
+wrap.addEventListener('change', async e => {
+  const input = e.target.closest('[data-spend-month]');
+  if(!input) return;
+  const month = input.dataset.spendMonth;
+  const text = input.value.trim();
+  const amount = Number(text);
+  if(text !== '' && (!Number.isFinite(amount) || amount < 0)){
+    toast('O gasto precisa ser um número igual ou maior que zero.', 'error');
+    input.value = state.adSpend[month] || '';
+    return;
+  }
+  const res = text === '' ? await removeAdSpend(month) : await setAdSpend(month, amount);
+  if(!res.ok) failed('salvar o gasto', res);
+});
+
+wrap.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-remove-month]');
+  if(!btn || !(btn.dataset.removeMonth in state.adSpend)) return;
+  const res = await removeAdSpend(btn.dataset.removeMonth);
+  if(!res.ok) failed('remover o mês', res);
+});
+
+$('#btnAddSpendMonth').addEventListener('click', async () => {
+  const picker = $('#addSpendMonth');
+  const month = picker.value;
+  if(!month){ picker.focus(); return; }
+  if(!(month in state.adSpend)){
+    const res = await setAdSpend(month, 0);
+    if(!res.ok){ failed('adicionar o mês', res); return; }
+  }
+  picker.value = '';
 });

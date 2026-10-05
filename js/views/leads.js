@@ -1,37 +1,38 @@
 /* Tela: Follow-up de leads */
-function renderLeadsTable(){
-  $('#leadTotal').textContent = leads.length;
-  $('#leadDue').textContent = leads.filter(l=>leadAging(l).level==='atrasado').length;
+import { state } from '../store.js';
+import { escapeHtml, fmtDate } from '../lib/format.js';
+import { leadAging } from '../lib/rules.js';
+import { $, ICON_CLOCK, comboLabel, emptyState } from '../ui/dom.js';
+import { openLeadModal } from '../ui/lead-modal.js';
 
-  const sorted = [...leads].sort((a,b)=>{
-    const aOver = leadAging(a).level==='atrasado' ? 0 : 1;
-    const bOver = leadAging(b).level==='atrasado' ? 0 : 1;
-    if(aOver!==bOver) return aOver-bOver;
-    return (a.followUpDate||'9999').localeCompare(b.followUpDate||'9999');
-  });
+const wrap = $('#leadsTableWrap');
 
-  $('#leadsTableWrap').innerHTML = sorted.length ? `
+export function renderLeadsTable(){
+  const rows = state.leads.map(lead => ({ lead, aging: leadAging(lead) }));
+  const overdue = r => r.aging.level === 'atrasado' ? 0 : 1;
+  // quem está na hora de chamar primeiro; depois, pela data de retorno mais próxima
+  rows.sort((a, b) => overdue(a) - overdue(b) || (a.lead.followUpDate || '9999').localeCompare(b.lead.followUpDate || '9999'));
+
+  $('#leadTotal').textContent = rows.length;
+  $('#leadDue').textContent = rows.filter(r => r.aging.level === 'atrasado').length;
+
+  wrap.innerHTML = rows.length ? `
     <table>
       <thead><tr><th>Lead</th><th>Interesse</th><th>Contato inicial</th><th>Status</th><th>Observação</th></tr></thead>
       <tbody>
-        ${sorted.map(l=>{
-          const aging = leadAging(l);
-          return `<tr class="client-row" data-lead-id="${l.id}">
-            <td><div class="cell-name">${escapeHtml(l.name)}</div><div class="cell-sub">${escapeHtml(l.whatsapp||'sem whatsapp')}</div></td>
-            <td><span class="combo-tag">${comboLabel(l.combo)}</span></td>
-            <td class="mono" style="color:var(--text-dim);">${fmtDate(l.contactDate)}</td>
-            <td><span class="aging-badge ${aging.level}">${aging.label}</span></td>
-            <td class="cell-sub" style="max-width:220px;">${escapeHtml(l.notes||'—')}</td>
-          </tr>`;
-        }).join('')}
+        ${rows.map(({ lead: l, aging }) => `
+          <tr class="client-row" data-lead-id="${escapeHtml(l.id)}">
+            <td><button type="button" class="row-link" data-fk="open:${escapeHtml(l.id)}">${escapeHtml(l.name)}</button><div class="cell-sub">${escapeHtml(l.whatsapp || 'sem whatsapp')}</div></td>
+            <td data-label="Interesse"><span class="combo-tag">${l.combo ? comboLabel(l.combo) : 'Não decidiu'}</span></td>
+            <td data-label="Contato inicial" class="mono dim">${fmtDate(l.contactDate)}</td>
+            <td data-label="Status"><span class="aging-badge ${aging.level}">${aging.label}</span></td>
+            <td data-label="Observação" class="cell-sub cell-notes">${escapeHtml(l.notes || '—')}</td>
+          </tr>`).join('')}
       </tbody>
-    </table>` : `<div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
-      <p>Nenhum lead guardado pra chamar depois.</p>
-      <button class="new-client-btn" onclick="document.getElementById('btnNewLead').click()">+ Novo lead</button>
-    </div>`;
-
-  $$('#leadsTableWrap .client-row').forEach(row=>{
-    row.addEventListener('click', ()=>openLeadModal(leads.find(l=>l.id===row.dataset.leadId)));
-  });
+    </table>` : emptyState('Nenhum lead guardado pra chamar depois.', { action:'new-lead', label:'+ Novo lead', icon:ICON_CLOCK });
 }
+
+wrap.addEventListener('click', e => {
+  const row = e.target.closest('.client-row');
+  if(row) openLeadModal(state.leads.find(l => l.id === row.dataset.leadId));
+});
