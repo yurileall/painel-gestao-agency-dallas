@@ -1,5 +1,5 @@
 /* Cálculos das telas. Funções puras: recebem os dados e devolvem números, sem tocar no DOM. */
-import { COMBOS } from '../constants.js';
+import { COMBOS, DEFAULT_SLA_DAYS } from '../constants.js';
 import { daysBetween, monthKey, todayISO } from './dates.js';
 import { agingInfo } from './rules.js';
 
@@ -22,7 +22,7 @@ export function dashboardStats(clients, month){
   const inPeriod = clients.filter(c => !month || monthKey(c.saleDate) === month);
   const revenue = sum(inPeriod, c => c.price || 0);
   const comboCounts = zeroPerCombo();
-  inPeriod.forEach(c => { comboCounts[c.combo] = (comboCounts[c.combo] || 0) + 1; });
+  inPeriod.forEach(c => (c.combo || []).forEach(k => { comboCounts[k] = (comboCounts[k] || 0) + 1; }));
   return {
     delivered: inPeriod.filter(c => c.status === 'entregue').length,
     revenue,
@@ -35,11 +35,10 @@ export function dashboardStats(clients, month){
 
 /**
  * @param {Client[]} clients
- * @param {number} slaDays
  * @param {string} [today]
  * @returns {{ byStatus: Object<string, Client[]>, active: number, late: number, avgDeliveryDays: number|null, slaRate: number|null }}
  */
-export function pipelineStats(clients, slaDays, today = todayISO()){
+export function pipelineStats(clients, today = todayISO()){
   const byStatus = { pendente:[], em_producao:[], entregue:[] };
   clients.forEach(c => byStatus[c.status]?.push(c));
   Object.values(byStatus).forEach(list => list.sort(bySaleDate));
@@ -50,9 +49,11 @@ export function pipelineStats(clients, slaDays, today = todayISO()){
   return {
     byStatus,
     active: open.length,
-    late: open.filter(c => agingInfo(c, slaDays, today).level === 'atrasado').length,
+    late: open.filter(c => agingInfo(c, c.slaDays || DEFAULT_SLA_DAYS, today).level === 'atrasado').length,
     avgDeliveryDays: delivered.length ? sum(deliveryDays, d => d) / delivered.length : null,
-    slaRate: delivered.length ? Math.round(deliveryDays.filter(d => d <= slaDays).length / delivered.length * 100) : null,
+    slaRate: delivered.length
+      ? Math.round(delivered.filter((c, i) => deliveryDays[i] <= (c.slaDays || DEFAULT_SLA_DAYS)).length / delivered.length * 100)
+      : null,
   };
 }
 
@@ -84,7 +85,11 @@ export function financeStats(clients, adSpend, currentMonth){
   const totalRevenue = sum(Object.values(revenue), v => v);
   const totalSpend = sum(Object.values(adSpend), v => Number(v) || 0);
   const byCombo = zeroPerCombo();
-  clients.forEach(c => { byCombo[c.combo] = (byCombo[c.combo] || 0) + (c.price || 0); });
+  clients.forEach(c => {
+    const items = c.combo || [];
+    const perItem = items.length ? (c.price || 0) / items.length : 0; // divide quando o cliente tem mais de um item
+    items.forEach(k => { byCombo[k] = (byCombo[k] || 0) + perItem; });
+  });
 
   return {
     months,

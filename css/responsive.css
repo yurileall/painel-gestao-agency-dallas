@@ -1,4 +1,17 @@
 /* Ajustes para telas pequenas */
+/* Notebook: menos margem lateral, e os blocos lado a lado passam a empilhar antes de apertar. */
+@media (max-width:1280px){
+  .main{ padding:32px 32px 64px; }
+  .two-col{ grid-template-columns:1fr; }
+}
+@media (max-width:1120px){
+  /* os quatro indicadores continuam na mesma linha, só mais compactos */
+  .kpi-grid{ gap:12px; }
+  .kpi-card{ padding:16px; }
+  .kpi-value{ font-size:22px; overflow-wrap:anywhere; }
+  .kanban-board{ gap:12px; }
+}
+
 @media (max-width:900px){
   /* A sidebar vira uma barra fixa no topo: marca + sair na primeira linha,
      menu rolável na segunda. (Antes ela só sumia, e não havia como navegar.) */
@@ -6,41 +19,47 @@
   .sidebar{
     width:100%; height:auto; z-index:20;
     flex-direction:row; flex-wrap:wrap; align-items:center; gap:8px 10px;
-    padding:10px 14px 8px; border-right:none; border-bottom:1px solid var(--border);
-    background:rgba(3,11,25,0.94);
+    padding:10px 16px 8px; border-right:none; border-bottom:1px solid var(--border);
+    background:rgba(var(--bar-rgb),0.88);
   }
   .brand{ padding:0; }
   .brand-sub, .clock{ display:none; }
-  .sidebar-foot{ margin:0 0 0 auto; padding:0; border:none; min-width:0; }
-  .sidebar-user{ padding:0; margin:0; border:none; }
-  .sidebar-user-email{ max-width:36vw; }
-  .logout-btn{ width:34px; height:34px; }
+  .sidebar-foot{ margin:0 0 0 auto; padding:0; border:none; min-width:0; display:flex; align-items:center; gap:8px; }
+  /* na barra do topo o seletor de tema fica só com os ícones */
+  .theme-switch{ margin:0; flex-shrink:0; }
+  .theme-opt{ flex:none; width:32px; height:32px; padding:0; }
+  .theme-opt span{ display:none; }
+  .sidebar-user{ padding:0; margin:0; border:none; min-width:0; }
+  .sidebar-user-email{ max-width:24vw; }
+  .logout-btn{ width:36px; height:36px; }
   .nav{ order:3; width:100%; flex-direction:row; gap:4px; margin:0; overflow-x:auto; scrollbar-width:none; }
   .nav::-webkit-scrollbar{ display:none; }
-  .nav-item{ width:auto; flex-shrink:0; padding:8px 11px; white-space:nowrap; font-size:13px; }
+  .nav-item{ width:auto; flex-shrink:0; padding:0 12px; white-space:nowrap; font-size:13px; }
+  .nav-item[data-view="pipeline"], .nav-item[data-view="financeiro"]{ margin-top:0; }
+  .nav-item.active::before{ display:none; } /* na barra horizontal o fundo do item já marca o ativo */
 
-  .main{ width:100%; padding:20px 16px 48px; }
+  .main{ width:100%; padding:24px 20px 56px; }
   .topbar{ align-items:flex-start; margin-bottom:20px; }
   .topbar-actions{ flex-wrap:wrap; }
-  .panel-head{ flex-wrap:wrap; gap:10px; }
-  .kpi-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
-  .kpi-card{ padding:14px; }
-  .kpi-value{ font-size:21px; overflow-wrap:anywhere; }
-  .two-col{ grid-template-columns:1fr; }
+  .panel-head{ flex-wrap:wrap; gap:10px; padding-top:12px; padding-bottom:12px; }
+  .kpi-grid{ grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+  .kpi-label{ margin-bottom:8px; }
   .combo-pick{ grid-template-columns:1fr; }
-  .field-row{ grid-template-columns:1fr; }
+  .field-row{ grid-template-columns:1fr; gap:18px; }
   .kanban-board{ grid-template-columns:1fr; }
 
   /* alvos de toque maiores */
   .move-btn, .remove-month, .close-btn{ width:36px; height:36px; }
   .move-btn{ font-size:15px; }
+  .select, .search, .btn, .new-client-btn{ --ctl:40px; }
+  .panel-actions .select, .panel-actions .btn{ height:36px; min-height:36px; }
+  .field input, .field select{ min-height:42px; }
 
   .overlay{ padding:10px; }
-  .modal.narrow{ width:560px; }
-  .modal-body{ padding:18px 16px; }
+  .modal{ max-height:92vh; max-height:92dvh; border-radius:14px; }
+  .modal-body{ padding:18px 16px 20px; }
   .modal-head, .modal-foot{ padding-left:16px; padding-right:16px; }
-  .check-item{ flex-wrap:wrap; }
-  .check-item input[type=text]{ width:100%; }
+  .modal-foot{ position:static; } /* com os botões quebrando em linhas, o rodapé fixo tomaria a tela */
   .toast-wrap{ left:12px; right:12px; bottom:12px; align-items:stretch; }
   .toast{ max-width:none; }
 }
@@ -49,15 +68,32 @@
 @media (max-width:700px){
   thead{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   table, tbody, tr, td{ display:block; width:100%; }
-  tr{ padding:12px 16px; border-bottom:1px solid var(--border); }
+  tr{ padding:14px 16px; border-bottom:1px solid var(--border); }
   tr:last-child{ border-bottom:none; }
-  td{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:4px 0; border:none; }
+  td, td:not(:first-child), td:not(:last-child){ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:5px 0; border:none; }
   td:first-child{ display:block; padding-bottom:8px; font-size:14px; }
+  td.mono{ white-space:normal; }
   td[data-label]::before{
     content:attr(data-label); flex-shrink:0;
-    color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+    font-family:'Inter',sans-serif; color:var(--text-faint); font-size:12px;
   }
   .cell-notes{ max-width:none; text-align:right; }
+  /* 16px evita o zoom automático do iOS ao focar um campo */
+  .field input, .field select, .field textarea, .login-field input, .search{ font-size:16px; }
   .search{ flex:1; width:auto; min-width:0; }
   .combo-bar-label{ width:96px; }
+}
+
+/* Sem espaço para marca + tema + e-mail + sair na mesma linha: o e-mail sai. */
+@media (max-width:520px){
+  .sidebar-user-email{ display:none; }
+}
+
+/* Celular */
+@media (max-width:480px){
+  .main{ padding:20px 14px 48px; }
+  .page-title{ font-size:20px; }
+  .page-sub{ font-size:13px; }
+  .login-card{ padding:26px 22px 20px; }
+  .panel-body{ padding:16px; }
 }

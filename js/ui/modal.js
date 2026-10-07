@@ -5,9 +5,9 @@ const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabi
 
 /**
  * @param {HTMLElement} overlay elemento .overlay que contém o .modal
- * @param {{ onClose?: () => void }} [opts]
+ * @param {{ onClose?: () => void, closeOnOutsideClick?: boolean }} [opts]
  */
-export function createModal(overlay, { onClose } = {}){
+export function createModal(overlay, { onClose, closeOnOutsideClick = true } = {}){
   const formError = $('.form-error', overlay);
   let returnFocusTo = null;
 
@@ -84,7 +84,9 @@ export function createModal(overlay, { onClose } = {}){
 
   // Fecha ao clicar fora. mousedown (e não click) para não fechar quando o
   // usuário arrasta uma seleção de texto de dentro do modal para fora.
-  overlay.addEventListener('mousedown', e => { if(e.target === overlay) close(); });
+  if(closeOnOutsideClick){
+    overlay.addEventListener('mousedown', e => { if(e.target === overlay) close(); });
+  }
   $('.close-btn', overlay).addEventListener('click', close);
   overlay.addEventListener('input', e => { if(e.target.hasAttribute('aria-invalid')) clearFieldError(e.target); });
 

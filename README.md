@@ -41,7 +41,7 @@ js/
   main.js               Ponto de entrada
   config.js             URL e chave pública do Supabase
   constants.js          Combos, entregáveis, status e responsáveis
-  store.js              Estado do app (clientes, leads, gasto, prazo) e notify()
+  store.js              Estado do app (clientes, leads, gasto) e notify()
   lib/                  Lógica pura, sem DOM nem Supabase — é o que os testes cobrem
     dates.js            Hoje, diferença em dias, mês
     format.js           Moeda, data e escape de HTML

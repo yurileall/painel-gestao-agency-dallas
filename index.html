@@ -6,6 +6,17 @@
 <title>Painel Dallas</title>
 <link rel="icon" type="image/png" href="assets/img/logo.png">
 
+<!-- Aplica o tema salvo antes de a página ser desenhada, para não piscar no tema errado.
+     A escolha (light | dark | auto) é gravada por js/ui/theme.js. -->
+<script>
+  (function(){
+    var choice = 'auto';
+    try{ choice = localStorage.getItem('dallas-theme') || 'auto'; }catch(e){}
+    var light = choice === 'light' || (choice !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches);
+    document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  })();
+</script>
+
 <!-- Estilos (a ordem importa para a cascata) -->
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
@@ -17,6 +28,25 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
+
+<!-- Ícones dos indicadores, definidos uma vez e usados com <use href="#i-...">. Traço e cor vêm de .kpi-icon (components.css). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-file-check" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9.5 15l2 2 4-4.5"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.5 12.5V2.5h10l8.09 8.09a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-columns" viewBox="0 0 24 24"><rect x="2.5" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.3" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5.5" height="7" rx="1.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="1.5" y="4.5" width="21" height="15" rx="2"/><path d="M1.5 10h21"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+</svg>
 
 <!-- ========================================================
      TELA DE LOGIN (Supabase Auth)
@@ -132,6 +162,20 @@
       </button>
     </nav>
     <div class="sidebar-foot">
+      <div class="theme-switch" role="group" aria-label="Tema">
+        <button type="button" class="theme-opt" data-theme-choice="light" aria-pressed="false" aria-label="Tema claro" title="Tema claro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+          <span>Claro</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-choice="dark" aria-pressed="false" aria-label="Tema escuro" title="Tema escuro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+          <span>Escuro</span>
+        </button>
+        <button type="button" class="theme-opt" data-theme-choice="auto" aria-pressed="false" aria-label="Tema automático (segue o sistema)" title="Automático: segue o tema do sistema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg>
+          <span>Auto</span>
+        </button>
+      </div>
       <div class="sidebar-user">
         <span class="sidebar-user-email mono" id="sidebarUserEmail">—</span>
         <button type="button" class="logout-btn" id="btnLogout" title="Sair" aria-label="Sair">
@@ -165,22 +209,22 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">Páginas entregues</div>
+          <div class="kpi-label">Páginas entregues <span class="kpi-icon tone-ok"><svg aria-hidden="true"><use href="#i-file-check"/></svg></span></div>
           <div class="kpi-value" id="kpiDelivered">0</div>
           <div class="kpi-delta" id="kpiDeliveredSub">no período selecionado</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Receita do período</div>
+          <div class="kpi-label">Receita do período <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-dollar"/></svg></span></div>
           <div class="kpi-value" id="kpiRevenue">R$ 0</div>
           <div class="kpi-delta" id="kpiRevenueSub">soma dos combos vendidos</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Vendas no período</div>
+          <div class="kpi-label">Vendas no período <span class="kpi-icon tone-violet"><svg aria-hidden="true"><use href="#i-bag"/></svg></span></div>
           <div class="kpi-value" id="kpiDeals">0</div>
           <div class="kpi-delta">negócios fechados</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Ticket médio</div>
+          <div class="kpi-label">Ticket médio <span class="kpi-icon tone-wait"><svg aria-hidden="true"><use href="#i-tag"/></svg></span></div>
           <div class="kpi-value" id="kpiAvg">R$ 0</div>
           <div class="kpi-delta">por cliente no período</div>
         </div>
@@ -206,10 +250,6 @@
           <div class="page-sub">Do fechamento até a entrega — nada passa batido.</div>
         </div>
         <div class="topbar-actions">
-          <div class="sla-box">
-            <label for="slaDaysInput">Prazo (dias)</label>
-            <input type="number" id="slaDaysInput" min="1" max="365" value="3">
-          </div>
           <button type="button" class="new-client-btn compact" id="btnNewClientPipeline" data-action="new-client">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Cliente fechou
@@ -219,22 +259,22 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">No pipeline</div>
+          <div class="kpi-label">No pipeline <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-columns"/></svg></span></div>
           <div class="kpi-value" id="pkTotal">0</div>
           <div class="kpi-delta">pendente + em produção</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Atrasados</div>
+          <div class="kpi-label">Atrasados <span class="kpi-icon tone-danger"><svg aria-hidden="true"><use href="#i-alert"/></svg></span></div>
           <div class="kpi-value" id="pkLate" style="color:var(--danger);">0</div>
           <div class="kpi-delta">acima do prazo definido</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Tempo médio de entrega</div>
+          <div class="kpi-label">Tempo médio de entrega <span class="kpi-icon tone-wait"><svg aria-hidden="true"><use href="#i-clock"/></svg></span></div>
           <div class="kpi-value" id="pkAvgTime">— <span>dias</span></div>
           <div class="kpi-delta">da venda até entregue</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Prazo cumprido</div>
+          <div class="kpi-label">Prazo cumprido <span class="kpi-icon tone-ok"><svg aria-hidden="true"><use href="#i-check-circle"/></svg></span></div>
           <div class="kpi-value" id="pkSlaRate">—%</div>
           <div class="kpi-delta">entregas dentro do prazo</div>
         </div>
@@ -273,12 +313,12 @@
 
       <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:20px;">
         <div class="kpi-card">
-          <div class="kpi-label">Leads aguardando</div>
+          <div class="kpi-label">Leads aguardando <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-users"/></svg></span></div>
           <div class="kpi-value" id="leadTotal">0</div>
           <div class="kpi-delta">na lista de retorno</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Hora de chamar</div>
+          <div class="kpi-label">Hora de chamar <span class="kpi-icon tone-danger"><svg aria-hidden="true"><use href="#i-phone"/></svg></span></div>
           <div class="kpi-value" id="leadDue" style="color:var(--danger);">0</div>
           <div class="kpi-delta">data de retorno já passou ou é hoje</div>
         </div>
@@ -326,22 +366,22 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">Faturamento total</div>
+          <div class="kpi-label">Faturamento total <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-dollar"/></svg></span></div>
           <div class="kpi-value" id="finRevenue">R$ 0</div>
           <div class="kpi-delta">soma de todas as vendas</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Gasto com tráfego</div>
+          <div class="kpi-label">Gasto com tráfego <span class="kpi-icon tone-wait"><svg aria-hidden="true"><use href="#i-card"/></svg></span></div>
           <div class="kpi-value" id="finSpend">R$ 0</div>
           <div class="kpi-delta">total investido em anúncios</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">CPA médio</div>
+          <div class="kpi-label">CPA médio <span class="kpi-icon tone-violet"><svg aria-hidden="true"><use href="#i-target"/></svg></span></div>
           <div class="kpi-value" id="finCpa">—</div>
           <div class="kpi-delta">gasto ÷ clientes fechados</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">ROAS</div>
+          <div class="kpi-label">ROAS <span class="kpi-icon tone-ok"><svg aria-hidden="true"><use href="#i-trend"/></svg></span></div>
           <div class="kpi-value" id="finRoas">—</div>
           <div class="kpi-delta">faturamento ÷ gasto</div>
         </div>
@@ -375,22 +415,22 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">Tempo em espera</div>
+          <div class="kpi-label">Tempo em espera <span class="kpi-icon tone-wait"><svg aria-hidden="true"><use href="#i-hourglass"/></svg></span></div>
           <div class="kpi-value" id="metWait">— <span>dias</span></div>
           <div class="kpi-delta">tempo até alguém começar a produzir. Quanto menor, melhor.</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Tempo de produção</div>
+          <div class="kpi-label">Tempo de produção <span class="kpi-icon tone-violet"><svg aria-hidden="true"><use href="#i-tool"/></svg></span></div>
           <div class="kpi-value" id="metProd">— <span>dias</span></div>
           <div class="kpi-delta">do início até ficar pronto</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Taxa de finalização</div>
+          <div class="kpi-label">Taxa de finalização <span class="kpi-icon tone-ok"><svg aria-hidden="true"><use href="#i-check-circle"/></svg></span></div>
           <div class="kpi-value" id="metFinish">—%</div>
           <div class="kpi-delta">do que já entrou, quanto já foi 100% entregue</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Total já operado</div>
+          <div class="kpi-label">Total já operado <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-users"/></svg></span></div>
           <div class="kpi-value" id="metTotal">0</div>
           <div class="kpi-delta">clientes cadastrados desde o início</div>
         </div>
@@ -425,12 +465,12 @@
     <div class="modal-body">
       <div class="field">
         <label for="fName">Nome do cliente / negócio</label>
-        <input type="text" id="fName" maxlength="120" required placeholder="Ex: Dra. Evelyn Fernanda">
+        <input type="text" id="fName" maxlength="120" required>
       </div>
       <div class="field-row">
         <div class="field">
           <label for="fWhats">WhatsApp</label>
-          <input type="tel" id="fWhats" placeholder="(71) 9xxxx-xxxx">
+          <input type="tel" id="fWhats" inputmode="numeric" maxlength="15" placeholder="(00) 00000-0000">
         </div>
         <div class="field">
           <label for="fNiche">Nicho</label>
@@ -443,10 +483,15 @@
         <div class="combo-pick" id="comboPick" role="group" aria-labelledby="comboPickLabel"></div>
       </div>
 
+      <div class="field">
+        <span class="field-label" id="addonPickLabel">Itens avulsos (opcional, em vez de um combo)</span>
+        <div class="combo-pick addon-pick" id="addonPick" role="group" aria-labelledby="addonPickLabel"></div>
+      </div>
+
       <div class="field-row">
         <div class="field">
           <label for="fPrice">Valor cobrado (R$)</label>
-          <input type="number" id="fPrice" min="0" step="0.01" placeholder="0,00">
+          <input type="text" id="fPrice" inputmode="decimal" placeholder="0,00">
         </div>
         <div class="field">
           <label for="fDate">Data da venda</label>
@@ -466,8 +511,8 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="checklistLabel">Checklist de entregáveis</span>
-        <div class="checklist" id="deliverablesChecklist" role="group" aria-labelledby="checklistLabel"></div>
+        <label for="fSla">Prazo (dias)</label>
+        <input type="number" id="fSla" min="1" max="365" value="3" required>
       </div>
 
       <div class="field">
@@ -498,12 +543,12 @@
     <div class="modal-body">
       <div class="field">
         <label for="lName">Nome do lead / negócio</label>
-        <input type="text" id="lName" maxlength="120" required placeholder="Ex: Barbearia do Zé">
+        <input type="text" id="lName" maxlength="120" required>
       </div>
       <div class="field-row">
         <div class="field">
           <label for="lWhats">WhatsApp</label>
-          <input type="tel" id="lWhats" placeholder="(71) 9xxxx-xxxx">
+          <input type="tel" id="lWhats" inputmode="numeric" maxlength="15" placeholder="(00) 00000-0000">
         </div>
         <div class="field">
           <label for="lCombo">Combo de interesse</label>

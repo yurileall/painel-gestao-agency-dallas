@@ -2,7 +2,7 @@
 import { state } from '../store.js';
 import { escapeHtml, fmtDate } from '../lib/format.js';
 import { leadAging } from '../lib/rules.js';
-import { $, ICON_CLOCK, comboLabel, emptyState } from '../ui/dom.js';
+import { $, ICON_CLOCK, comboLabel, emptyState, nameCell } from '../ui/dom.js';
 import { openLeadModal } from '../ui/lead-modal.js';
 
 const wrap = $('#leadsTableWrap');
@@ -22,7 +22,7 @@ export function renderLeadsTable(){
       <tbody>
         ${rows.map(({ lead: l, aging }) => `
           <tr class="client-row" data-lead-id="${escapeHtml(l.id)}">
-            <td><button type="button" class="row-link" data-fk="open:${escapeHtml(l.id)}">${escapeHtml(l.name)}</button><div class="cell-sub">${escapeHtml(l.whatsapp || 'sem whatsapp')}</div></td>
+            <td>${nameCell(l.id, l.name, l.whatsapp || 'sem whatsapp')}</td>
             <td data-label="Interesse"><span class="combo-tag">${l.combo ? comboLabel(l.combo) : 'Não decidiu'}</span></td>
             <td data-label="Contato inicial" class="mono dim">${fmtDate(l.contactDate)}</td>
             <td data-label="Status"><span class="aging-badge ${aging.level}">${aging.label}</span></td>

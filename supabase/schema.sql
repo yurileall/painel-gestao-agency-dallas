@@ -17,18 +17,21 @@ create table if not exists public.clients (
   name                text not null,
   whatsapp            text,
   niche               text,
-  combo               text,
+  combo               text, -- chave de COMBOS; mais de um item (avulsos) fica separado por vírgula
   price               numeric(12,2) default 0,
   sale_date           date,
   owner               text,
   status              text not null default 'pendente',
-  deliverables        jsonb default '{}'::jsonb,
   notes               text,
   delivered_date      date,
   producao_start_date date,
+  sla_days            integer not null default 3,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
+
+-- Banco já criado sem a coluna: adiciona se faltar (não mexe em quem já tem).
+alter table public.clients add column if not exists sla_days integer not null default 3;
 
 create table if not exists public.leads (
   id             text primary key,
@@ -42,6 +45,9 @@ create table if not exists public.leads (
   updated_at     timestamptz not null default now()
 );
 
+-- O painel não usa mais esta tabela (prazo agora é por cliente, coluna
+-- clients.sla_days acima). Mantida aqui sem uso para não apagar dados sem
+-- um "ok" explícito; pode ser removida manualmente se não for mais útil.
 create table if not exists public.app_settings (
   id       integer primary key,
   sla_days integer not null default 3
@@ -117,6 +123,10 @@ begin
     alter table public.app_settings add constraint app_settings_sla_check
       check (sla_days between 1 and 365) not valid;
   end if;
+  if not exists (select 1 from pg_constraint where conname = 'clients_sla_check' and conrelid = 'public.clients'::regclass) then
+    alter table public.clients add constraint clients_sla_check
+      check (sla_days between 1 and 365) not valid;
+  end if;
 end $$;
 
 -- ---------- TEMPO REAL ----------
@@ -137,3 +147,8 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ---------- CACHE DA API ----------
+-- Avisa a API do Supabase que o schema mudou. Sem isto, uma coluna recém-criada
+-- pode demorar a ser reconhecida ("Could not find the ... column in the schema cache").
+notify pgrst, 'reload schema';

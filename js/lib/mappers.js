@@ -1,9 +1,5 @@
 /* Tipos do domínio e conversão entre o objeto do app (camelCase) e a linha do banco (snake_case). */
-
-/**
- * Entregável: `true/false`, ou `{ done, url }` para os que guardam link (ver LINK_DELIVERABLES).
- * @typedef {boolean | { done: boolean, url: string }} Deliverable
- */
+import { DEFAULT_SLA_DAYS } from '../constants.js';
 
 /**
  * @typedef {Object} Client
@@ -11,15 +7,15 @@
  * @property {string} name
  * @property {string} [whatsapp]
  * @property {string} [niche]
- * @property {'basico'|'presenca'|'autoridade'} combo
+ * @property {string[]} combo                   chaves de COMBOS; um combo fechado sozinho, ou um ou mais itens avulsos
  * @property {number} price
  * @property {string} saleDate                 AAAA-MM-DD → coluna sale_date
  * @property {string} [owner]
  * @property {'pendente'|'em_producao'|'entregue'} status
- * @property {Object<string, Deliverable>} deliverables
  * @property {string} [notes]
  * @property {string|null} deliveredDate       AAAA-MM-DD → coluna delivered_date
  * @property {string|null} producaoStartDate   AAAA-MM-DD → coluna producao_start_date
+ * @property {number} slaDays                  prazo de entrega em dias → coluna sla_days
  */
 
 /**
@@ -45,15 +41,15 @@ export function clientToRow(c){
     name: c.name,
     whatsapp: c.whatsapp || null,
     niche: c.niche || null,
-    combo: c.combo || null,
+    combo: Array.isArray(c.combo) ? c.combo.join(',') || null : (c.combo || null), // coluna é text; várias chaves ficam separadas por vírgula
     price: c.price || 0,
     sale_date: c.saleDate || null,
     owner: c.owner || null,
     status: c.status,
-    deliverables: c.deliverables || {},
     notes: c.notes || null,
     delivered_date: c.deliveredDate || null,
     producao_start_date: c.producaoStartDate || null,
+    sla_days: c.slaDays || DEFAULT_SLA_DAYS,
   };
 }
 
@@ -64,15 +60,15 @@ export function rowToClient(r){
     name: r.name,
     whatsapp: r.whatsapp,
     niche: r.niche,
-    combo: r.combo,
+    combo: r.combo ? String(r.combo).split(',').filter(Boolean) : [],
     price: r.price != null ? Number(r.price) : 0,
     saleDate: r.sale_date,
     owner: r.owner,
     status: r.status,
-    deliverables: r.deliverables || {},
     notes: r.notes,
     deliveredDate: r.delivered_date,
     producaoStartDate: r.producao_start_date,
+    slaDays: r.sla_days != null ? Number(r.sla_days) : DEFAULT_SLA_DAYS,
   };
 }
 

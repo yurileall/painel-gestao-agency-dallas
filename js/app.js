@@ -2,13 +2,13 @@
 import { state, subscribe, notify, resetData } from './store.js';
 import { loadClients } from './data/clients.js';
 import { loadLeads } from './data/leads.js';
-import { loadSettings } from './data/settings.js';
 import { loadAdSpend } from './data/ad-spend.js';
 import { startRealtime, stopRealtime } from './data/realtime.js';
 import { $ } from './ui/dom.js';
 import { openClientModal } from './ui/client-modal.js';
 import { openLeadModal } from './ui/lead-modal.js';
 import './ui/nav.js';
+import './ui/theme.js';
 import { renderDashboard } from './views/dashboard.js';
 import { renderPipeline } from './views/pipeline.js';
 import { renderClientsTable } from './views/clients.js';
@@ -65,7 +65,7 @@ function showLoadError(msg){
 }
 
 async function loadAll(){
-  const results = await Promise.all([loadSettings(), loadAdSpend(), loadClients(), loadLeads()]);
+  const results = await Promise.all([loadAdSpend(), loadClients(), loadLeads()]);
   if(!running) return;
   lastSync = Date.now();
   showLoadError(results.find(r => !r.ok)?.message || null);
