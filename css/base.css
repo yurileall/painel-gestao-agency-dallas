@@ -1,57 +1,158 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root{
-  --bg:#030b19;
-  --bg-elev:#071325;
-  --bg-elev-2:#0b192f;
-  --border:rgba(255,255,255,0.09);
-  --border-strong:rgba(255,255,255,0.18);
-  --text:#f5f5f5;
-  --text-dim:#9a9a9a;
-  --text-faint:#858585; /* 5:1 sobre --bg-elev; o #5c5c5c anterior dava 2.8:1, abaixo do mínimo de leitura */
-  --ok:#4ade80;
-  --wait:#fbbf24;
-  --prog:#60a5fa;
-  --danger:#f87171;
-  --radius:10px;
+  color-scheme:dark; /* controles nativos (calendário, lista do select, barra de rolagem) seguem o tema escuro */
+
+  /* Superfícies, do fundo para o que fica por cima */
+  --bg:#090a0d;
+  --bg-elev:#0f1115;
+  --bg-elev-2:#16181d;
+  --bg-elev-3:#1d2026;
+  --hover:rgba(255,255,255,0.045);
+  --border:rgba(255,255,255,0.07);
+  --border-strong:rgba(255,255,255,0.13);
+  --border-hover:rgba(255,255,255,0.22);
+
+  /* Trios RGB para montar transparências: rgba(var(--fg-rgb), .06) */
+  --fg-rgb:255,255,255;  /* véu por cima das superfícies (hover, trilhos, etiquetas) */
+  --bar-rgb:9,10,13;     /* fundo translúcido da sidebar / barra do topo */
+  --ok-rgb:76,195,138;
+  --overlay:rgba(4,5,7,0.68); /* fundo atrás dos modais */
+  --mark-bg:#16181d;     /* quadro da logo: escuro nos dois temas, porque a logo é clara */
+
+  --text:#ededf0;
+  --text-dim:#a3a6ad;
+  --text-faint:#7f838c; /* 4.7:1 sobre --bg-elev-2; mais escuro que isso cai abaixo do mínimo de leitura */
+  --text-strong:#fff;   /* contraste máximo: hover dos botões cheios e texto selecionado */
+
+  /* Cor de destaque: foco, item ativo, seleção e barras. Usar com moderação. */
+  --accent:#6e9ef5;
+  --accent-soft:rgba(110,158,245,0.14);
+
+  --ok:#4cc38a;
+  --ok-soft:rgba(76,195,138,0.12);
+  --wait:#e2b453;
+  --wait-soft:rgba(226,180,83,0.12);
+  --prog:#6e9ef5;
+  --prog-soft:rgba(110,158,245,0.13);
+  --danger:#ef6b6b;
+  --danger-soft:rgba(239,107,107,0.11);
+  --danger-line:rgba(239,107,107,0.32);
+  --danger-text:#f7c9c9; /* texto corrido sobre --danger-soft */
+  /* Cores extras só para diferenciar séries e ícones (não indicam estado) */
+  --violet:#a58bf2;
+  --violet-soft:rgba(165,139,242,0.14);
+  --pink:#e884b8;
+  --pink-soft:rgba(232,132,184,0.13);
+
+  /* Campos de formulário */
+  --field-bg:#12141a;
+  --ctl:36px; /* altura padrão de botões, selects e busca */
+  --icon-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a3a6ad' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --icon-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237f838c' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.28);
+  --shadow-lg:0 24px 60px -12px rgba(0,0,0,0.65);
+  --shadow-toast:0 12px 32px -8px rgba(0,0,0,0.6);
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+
+/* Tema claro. O atributo data-theme é posto no <html> pelo script do <head> (index.html)
+   e mantido por js/ui/theme.js; "automático" vira light ou dark conforme o sistema. */
+:root[data-theme="light"]{
+  color-scheme:light;
+
+  --bg:#f4f5f7;
+  --bg-elev:#ffffff;
+  --bg-elev-2:#ffffff;
+  --bg-elev-3:#fafbfc;
+  --hover:rgba(15,18,25,0.05);
+  --border:rgba(15,18,25,0.09);
+  --border-strong:rgba(15,18,25,0.16);
+  --border-hover:rgba(15,18,25,0.30);
+
+  --fg-rgb:15,18,25;
+  --bar-rgb:255,255,255;
+  --ok-rgb:26,127,82;
+  --overlay:rgba(15,18,25,0.40);
+
+  --text:#15171c;
+  --text-dim:#565a63;
+  --text-faint:#6b6f78; /* 4.6:1 sobre --bg */
+  --text-strong:#000;
+
+  /* cores de estado mais escuras: precisam ser lidas como texto sobre fundo claro */
+  --accent:#2f6fe0;
+  --accent-soft:rgba(47,111,224,0.12);
+
+  --ok:#1a7f52;
+  --ok-soft:rgba(26,127,82,0.11);
+  --wait:#8f6400;
+  --wait-soft:rgba(180,125,0,0.13);
+  --prog:#2f6fe0;
+  --prog-soft:rgba(47,111,224,0.11);
+  --danger:#c93a3a;
+  --danger-soft:rgba(201,58,58,0.09);
+  --danger-line:rgba(201,58,58,0.35);
+  --danger-text:#8f2323;
+  --violet:#6d4fd6;
+  --violet-soft:rgba(109,79,214,0.11);
+  --pink:#c0428a;
+  --pink-soft:rgba(192,66,138,0.10);
+
+  --field-bg:#ffffff;
+  --icon-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23565a63' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --icon-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6f78' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+
+  --shadow-sm:0 1px 2px rgba(15,18,25,0.06);
+  --shadow-lg:0 24px 60px -12px rgba(15,18,25,0.22);
+  --shadow-toast:0 12px 32px -8px rgba(15,18,25,0.2);
 }
 *{box-sizing:border-box; margin:0; padding:0;}
+*{ scrollbar-width:thin; scrollbar-color:rgba(var(--fg-rgb),0.14) transparent; }
 html,body{height:100%;}
 body{
   background:
-    radial-gradient(circle at 15% 0%, rgba(255,255,255,0.05), transparent 40%),
-    linear-gradient(var(--bg),var(--bg));
+    radial-gradient(900px 420px at 18% -8%, rgba(132,150,196,0.08), transparent 70%) fixed no-repeat,
+    var(--bg);
   color:var(--text);
   font-family:'Inter',sans-serif;
   font-size:14px;
+  line-height:1.5;
   min-height:100vh;
-  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
 }
-body::before{
-  content:"";
-  position:fixed; inset:0;
-  background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-  background-size: 42px 42px;
-  pointer-events:none;
-  z-index:0;
-  mask-image: radial-gradient(ellipse 80% 60% at 20% 0%, black, transparent 70%);
-}
-h1,h2,h3,.display{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
-.mono{ font-family:'JetBrains Mono',monospace; }
-::selection{ background:var(--text); color:var(--bg); }
-button{ font-family:inherit; cursor:pointer; }
-button:disabled{ cursor:default; opacity:.55; }
+/* Títulos usam a fonte do texto; a Space Grotesk fica para a marca e os números de destaque. */
+h1,h2,h3{ font-family:inherit; font-weight:600; letter-spacing:-0.01em; line-height:1.3; }
+.display{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
+.mono{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
+::selection{ background:rgba(110,158,245,0.35); color:var(--text-strong); }
+button{ font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+button:disabled{ cursor:default; opacity:.5; }
 input,select,textarea{ font-family:inherit; }
+::placeholder{ color:var(--text-faint); opacity:1; }
+option{ background:var(--bg-elev-2); color:var(--text); }
 [hidden]{ display:none !important; }
 
 /* Foco de teclado sempre visível. !important porque os campos zeram o outline
    em regras mais específicas (.field input, .select...). */
-:focus-visible{ outline:2px solid var(--prog) !important; outline-offset:2px; }
+:focus-visible{ outline:2px solid var(--accent) !important; outline-offset:2px; }
+/* Em campos de texto o contorno assume o lugar da borda, com um halo suave em volta. */
+input:focus-visible, select:focus-visible, textarea:focus-visible{ outline-offset:-1px; box-shadow:0 0 0 4px var(--accent-soft); }
+input[type=checkbox]:focus-visible{ outline-offset:2px; box-shadow:none; }
 
 .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .dim{ color:var(--text-dim); }
 .pos{ color:var(--ok); }
 .neg{ color:var(--danger); }
+
+@keyframes fade-in{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes rise-in{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@keyframes spin{ to{ transform:rotate(360deg); } }
 
 @media (prefers-reduced-motion:reduce){
   *{ animation:none !important; transition:none !important; }
