@@ -2,7 +2,7 @@
 import { state } from '../store.js';
 import { monthLabel } from '../lib/dates.js';
 import { operationMetrics } from '../lib/stats.js';
-import { $, barRow, emptyState } from '../ui/dom.js';
+import { $, barRow, emptyState, nameColor } from '../ui/dom.js';
 
 const days = v => `${v === null ? '—' : v.toFixed(1)} <span>dias</span>`;
 
@@ -21,6 +21,6 @@ export function renderMetrics(){
 
   const maxLoad = Math.max(...m.ownerLoad.map(x => x.count), 1);
   $('#metOwnerLoad').innerHTML = m.ownerLoad.length
-    ? m.ownerLoad.map(x => barRow(x.owner, Math.round(x.count / maxLoad * 100), x.count)).join('')
+    ? m.ownerLoad.map(x => barRow(x.owner, Math.round(x.count / maxLoad * 100), x.count, '', nameColor(x.owner))).join('')
     : emptyState('Nenhum cliente em aberto no momento.');
 }

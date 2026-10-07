@@ -1,32 +1,39 @@
 /* Modal de cliente (criar, editar, excluir) */
-import { COMBOS, DEFAULT_COMBO, DELIVERABLE_LABELS, LINK_DELIVERABLES, OWNERS, STATUS_LABELS, STATUS_ORDER } from '../constants.js';
+import { COMBOS, DEFAULT_COMBO, DEFAULT_SLA_DAYS, OWNERS, STATUS_LABELS, STATUS_ORDER } from '../constants.js';
 import { state } from '../store.js';
 import { saveClient, deleteClient } from '../data/clients.js';
 import { todayISO } from '../lib/dates.js';
 import { escapeHtml, fmtBRL } from '../lib/format.js';
+import { attachCurrencyMask, attachPhoneMask, formatCurrencyValue, formatPhone, parseCurrency } from '../lib/mask.js';
 import { newId } from '../lib/mappers.js';
 import { applyStatusDates } from '../lib/rules.js';
-import { normalizeDeliverables, validateClient } from '../lib/validate.js';
+import { validateClient } from '../lib/validate.js';
 import { $, $$, toast } from './dom.js';
 import { createModal } from './modal.js';
 
-const FIELD_IDS = { name:'fName', whatsapp:'fWhats', price:'fPrice', saleDate:'fDate', status:'fStatus' };
+const FIELD_IDS = { name:'fName', whatsapp:'fWhats', price:'fPrice', saleDate:'fDate', status:'fStatus', slaDays:'fSla' };
 
 let editingId = null;
-let selectedCombo = DEFAULT_COMBO;
+let selectedItems = [DEFAULT_COMBO];
 let onSaved = null;
 
 const modal = createModal($('#clientOverlay'), {
   onClose(){ editingId = null; onSaved = null; },
+  closeOnOutsideClick: false,
 });
 
 // Opções montadas a partir das constantes, para o HTML não repetir nomes e preços.
-$('#comboPick').innerHTML = Object.entries(COMBOS).map(([key, c]) =>
-  `<button type="button" class="combo-opt" data-combo="${key}" aria-pressed="false">
-    <span class="cn">${escapeHtml(c.label)}</span><span class="cp mono">${fmtBRL(c.price)}</span>
+const optionButtons = c => Object.entries(COMBOS).filter(([, v]) => v.kind === c).map(([key, v]) =>
+  `<button type="button" class="combo-opt" data-key="${key}" aria-pressed="false">
+    <span class="cn">${escapeHtml(v.label)}</span><span class="cp mono">${fmtBRL(v.price)}</span>
   </button>`).join('');
+$('#comboPick').innerHTML = optionButtons('combo');
+$('#addonPick').innerHTML = optionButtons('addon');
+const sumPrice = items => items.reduce((s, k) => s + (COMBOS[k]?.price || 0), 0);
 $('#fOwner').innerHTML = OWNERS.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
 $('#fStatus').innerHTML = STATUS_ORDER.map(s => `<option value="${s}">${escapeHtml(STATUS_LABELS[s])}</option>`).join('');
+attachPhoneMask($('#fWhats'));
+attachCurrencyMask($('#fPrice'));
 
 /**
  * @param {import('../lib/mappers.js').Client|null} client null para um cliente novo
@@ -42,62 +49,47 @@ export function openClientModal(client, opts = {}){
 
   $('#modalTitle').textContent = client ? 'Editar cliente' : 'Novo cliente';
   $('#fName').value = data.name || '';
-  $('#fWhats').value = data.whatsapp || '';
+  $('#fWhats').value = formatPhone((data.whatsapp || '').replace(/\D/g, ''));
   $('#fNiche').value = data.niche || '';
   $('#fDate').value = data.saleDate || todayISO();
+  $('#fSla').value = data.slaDays || DEFAULT_SLA_DAYS;
   $('#fOwner').value = data.owner || OWNERS[0];
   $('#fStatus').value = data.status || 'pendente';
   $('#fNotes').value = data.notes || '';
   $('#btnDelete').hidden = !client;
 
-  const combo = COMBOS[data.combo] ? data.combo : DEFAULT_COMBO;
-  pickCombo(combo);
-  $('#fPrice').value = client ? (client.price ?? '') : COMBOS[combo].price.toFixed(2);
-  renderChecklist(data.deliverables || {}, combo);
+  const combo = Array.isArray(data.combo) && data.combo.length && data.combo.every(k => COMBOS[k]) ? data.combo : [DEFAULT_COMBO];
+  pickItems(combo);
+  $('#fPrice').value = client ? (client.price != null ? formatCurrencyValue(client.price) : '') : formatCurrencyValue(sumPrice(combo));
 }
 
-function pickCombo(combo){
-  selectedCombo = combo;
+function pickItems(items){
+  selectedItems = items;
   $$('.combo-opt').forEach(o => {
-    const picked = o.dataset.combo === combo;
+    const picked = selectedItems.includes(o.dataset.key);
     o.classList.toggle('picked', picked);
     o.setAttribute('aria-pressed', picked);
   });
 }
 
-$('#comboPick').addEventListener('click', e => {
+// Combo fechado é escolha única; itens avulsos (abaixo) se somam entre si, mas não com um combo.
+function onPickOption(e){
   const opt = e.target.closest('.combo-opt');
   if(!opt) return;
-  const marked = collectChecklist(); // preserva o que já foi marcado ao trocar de combo
-  pickCombo(opt.dataset.combo);
-  $('#fPrice').value = COMBOS[selectedCombo].price.toFixed(2);
-  renderChecklist(marked, selectedCombo);
-});
-
-function renderChecklist(existing, combo){
-  $('#deliverablesChecklist').innerHTML = COMBOS[combo].deliverables.map(key => {
-    const done = existing[key]?.done ?? existing[key] ?? false;
-    const label = DELIVERABLE_LABELS[key];
-    const link = LINK_DELIVERABLES.includes(key)
-      ? `<input type="text" inputmode="url" data-extra="${key}" placeholder="link" aria-label="Link — ${escapeHtml(label)}" value="${escapeHtml(existing[key]?.url || '')}">`
-      : '';
-    return `<div class="check-item">
-      <input type="checkbox" id="chk_${key}" data-key="${key}" ${done ? 'checked' : ''}>
-      <label for="chk_${key}">${escapeHtml(label)}</label>
-      ${link}
-    </div>`;
-  }).join('');
+  const key = opt.dataset.key;
+  if(COMBOS[key].kind === 'combo'){
+    pickItems([key]);
+  } else {
+    const onlyAddons = selectedItems.every(k => COMBOS[k].kind === 'addon');
+    const items = onlyAddons ? [...selectedItems] : [];
+    const idx = items.indexOf(key);
+    idx >= 0 ? items.splice(idx, 1) : items.push(key);
+    pickItems(items);
+  }
+  $('#fPrice').value = formatCurrencyValue(sumPrice(selectedItems));
 }
-
-function collectChecklist(){
-  const data = {};
-  $$('#deliverablesChecklist .check-item').forEach(item => {
-    const cb = $('input[type=checkbox]', item);
-    const link = $('input[data-extra]', item);
-    data[cb.dataset.key] = link ? { done: cb.checked, url: link.value } : cb.checked;
-  });
-  return data;
-}
+$('#comboPick').addEventListener('click', onPickOption);
+$('#addonPick').addEventListener('click', onPickOption);
 
 function readForm(){
   const existing = editingId ? state.clients.find(c => c.id === editingId) : null;
@@ -107,13 +99,13 @@ function readForm(){
     name: $('#fName').value.trim(),
     whatsapp: $('#fWhats').value.trim(),
     niche: $('#fNiche').value.trim(),
-    combo: selectedCombo,
-    // campo vazio = preço de tabela do combo; 0 digitado é 0 mesmo (cortesia)
-    price: priceText === '' ? COMBOS[selectedCombo].price : Number(priceText),
+    combo: selectedItems,
+    // campo vazio = soma do preço de tabela; 0 digitado é 0 mesmo (cortesia)
+    price: priceText === '' ? sumPrice(selectedItems) : parseCurrency(priceText),
     saleDate: $('#fDate').value,
+    slaDays: parseInt($('#fSla').value, 10),
     owner: $('#fOwner').value,
     status: $('#fStatus').value,
-    deliverables: normalizeDeliverables(collectChecklist()),
     notes: $('#fNotes').value.trim(),
     deliveredDate: existing?.deliveredDate || null,
     producaoStartDate: existing?.producaoStartDate || null,

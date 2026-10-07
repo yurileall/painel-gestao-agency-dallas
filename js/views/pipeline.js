@@ -1,16 +1,14 @@
 /* Tela: Pipeline (Kanban) */
-import { STATUS_LABELS } from '../constants.js';
+import { DEFAULT_SLA_DAYS, STATUS_LABELS } from '../constants.js';
 import { state } from '../store.js';
 import { moveClient } from '../data/clients.js';
-import { saveSlaDays } from '../data/settings.js';
 import { escapeHtml, fmtBRL } from '../lib/format.js';
 import { adjacentStatus, agingInfo } from '../lib/rules.js';
 import { pipelineStats } from '../lib/stats.js';
-import { $, $$, comboLabel, toast } from '../ui/dom.js';
+import { $, $$, avatar, comboLabel, toast } from '../ui/dom.js';
 import { openClientModal } from '../ui/client-modal.js';
 
 const board = $('#kanbanBoard');
-const slaInput = $('#slaDaysInput');
 const COLUMNS = { pendente:['#colPendente','#countPendente'], em_producao:['#colProducao','#countProducao'], entregue:['#colEntregue','#countEntregue'] };
 
 function moveButton(c, dir, arrow){
@@ -21,7 +19,7 @@ function moveButton(c, dir, arrow){
 }
 
 function kanbanCard(c){
-  const { days, level } = agingInfo(c, state.slaDays);
+  const { days, level } = agingInfo(c, c.slaDays || DEFAULT_SLA_DAYS);
   const badge = c.status === 'entregue' ? `pronto em ${days}d` : `${days}d aberto`;
   return `<div class="kanban-card ${level}" data-id="${escapeHtml(c.id)}">
     <div class="kc-top">
@@ -29,6 +27,7 @@ function kanbanCard(c){
       <span class="aging-badge ${level}">${badge}</span>
     </div>
     <div class="combo-tag">${comboLabel(c.combo)}</div>
+    <div class="kc-owner">${c.owner ? `<span class="owner-chip">${avatar(c.owner, 'sm')}${escapeHtml(c.owner)}</span>` : '<span class="dim">Sem responsável</span>'}</div>
     <div class="kc-foot">
       <span class="mono dim kc-price">${fmtBRL(c.price)}</span>
       <div class="move-btns">${moveButton(c, 'back', '←')}${moveButton(c, 'fwd', '→')}</div>
@@ -37,7 +36,7 @@ function kanbanCard(c){
 }
 
 export function renderPipeline(){
-  const s = pipelineStats(state.clients, state.slaDays);
+  const s = pipelineStats(state.clients);
 
   for(const [status, [col, count]] of Object.entries(COLUMNS)){
     const list = s.byStatus[status];
@@ -49,9 +48,6 @@ export function renderPipeline(){
   $('#pkLate').textContent = s.late;
   $('#pkAvgTime').innerHTML = `${s.avgDeliveryDays === null ? '—' : s.avgDeliveryDays.toFixed(1)} <span>dias</span>`;
   $('#pkSlaRate').textContent = (s.slaRate === null ? '—' : s.slaRate) + '%';
-
-  // não sobrescreve o prazo enquanto o usuário está digitando nele
-  if(document.activeElement !== slaInput) slaInput.value = state.slaDays;
 }
 
 async function move(id, target){
@@ -75,15 +71,4 @@ board.addEventListener('click', e => {
   card.setAttribute('aria-busy', 'true');
   $$('.move-btn', card).forEach(b => { b.disabled = true; }); // evita clique duplo enquanto grava
   move(client.id, target);
-});
-
-slaInput.addEventListener('change', async () => {
-  const days = Math.min(365, Math.max(1, parseInt(slaInput.value, 10) || state.slaDays));
-  slaInput.value = days;
-  if(days === state.slaDays) return;
-  const res = await saveSlaDays(days);
-  if(!res.ok){
-    slaInput.value = state.slaDays;
-    toast(`Não foi possível salvar o prazo: ${res.message}`, 'error');
-  }
 });

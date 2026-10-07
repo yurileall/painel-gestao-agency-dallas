@@ -5,21 +5,27 @@ import { dbErrorMessage, isNetworkError } from '../js/lib/errors.js';
 
 test('cliente: ida e volta pelo formato do banco preserva os dados', () => {
   const client = {
-    id:'c_abc', name:'Dra. Evelyn', whatsapp:'71912345678', niche:'Psicologia', combo:'presenca', price:297,
-    saleDate:'2026-10-01', owner:'Yuri', status:'entregue', deliverables:{ lp:{ done:true, url:'https://a.com' }, whats:true },
-    notes:'obs', deliveredDate:'2026-10-03', producaoStartDate:'2026-10-02',
+    id:'c_abc', name:'Dra. Evelyn', whatsapp:'71912345678', niche:'Psicologia', combo:['landing_page','link_bio'], price:297,
+    saleDate:'2026-10-01', owner:'Yuri', status:'entregue',
+    notes:'obs', deliveredDate:'2026-10-03', producaoStartDate:'2026-10-02', slaDays:5,
   };
   assert.deepEqual(rowToClient(clientToRow(client)), client);
 });
 
 test('clientToRow usa snake_case e troca vazio por null', () => {
-  const row = clientToRow({ id:'c_1', name:'A', whatsapp:'', niche:'', combo:'basico', price:0, saleDate:'2026-10-01', status:'pendente' });
+  const row = clientToRow({ id:'c_1', name:'A', whatsapp:'', niche:'', combo:['basico'], price:0, saleDate:'2026-10-01', status:'pendente' });
   assert.equal(row.sale_date, '2026-10-01');
   assert.equal(row.whatsapp, null);
   assert.equal(row.delivered_date, null);
   assert.equal(row.producao_start_date, null);
-  assert.deepEqual(row.deliverables, {});
+  assert.equal(row.combo, 'basico');
   assert.equal('saleDate' in row, false);
+});
+
+test('clientToRow junta vários itens com vírgula; rowToClient separa de volta', () => {
+  assert.equal(clientToRow({ id:'c_1', combo:['landing_page','link_bio'] }).combo, 'landing_page,link_bio');
+  assert.deepEqual(rowToClient({ id:'c_1', combo:'landing_page,link_bio' }).combo, ['landing_page','link_bio']);
+  assert.deepEqual(rowToClient({ id:'c_1', combo:null }).combo, []);
 });
 
 test('rowToClient converte o preço numeric (texto) em número', () => {

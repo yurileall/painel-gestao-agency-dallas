@@ -5,13 +5,46 @@ import { escapeHtml } from '../lib/format.js';
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => root.querySelectorAll(sel);
 
-export const comboLabel = combo => escapeHtml(COMBOS[combo]?.label || combo || '—');
+export const comboLabel = combo => {
+  const keys = Array.isArray(combo) ? combo : [combo];
+  const labels = keys.map(k => COMBOS[k]?.label || k).filter(Boolean);
+  return escapeHtml(labels.length ? labels.join(' + ') : '—');
+};
 
 export function statusBadge(status){
   return `<span class="badge ${escapeHtml(status)}"><span class="badge-dot"></span>${escapeHtml(STATUS_LABELS[status] || status)}</span>`;
 }
 
-const ICON_PLUS  = '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>';
+/* Cores para diferenciar séries (combos, responsáveis). Não usar as de estado: vermelho aqui pareceria alerta. */
+const TONES = ['accent', 'ok', 'wait', 'violet', 'pink'];
+/** @param {number} i posição da série @returns {string} cor em CSS, ex.: "var(--ok)" */
+export const seriesColor = i => `var(--${TONES[Math.max(i, 0) % TONES.length]})`;
+
+/* A cor sai do nome, então a mesma pessoa tem sempre a mesma, no avatar e nas barras. */
+function toneOf(name){
+  let hash = 0;
+  for(const ch of String(name || '').trim()) hash = (hash * 31 + ch.codePointAt(0)) >>> 0;
+  return TONES[hash % TONES.length];
+}
+/** @returns {string} cor em CSS para uma barra identificada por nome (ex.: responsável) */
+export const nameColor = name => `var(--${toneOf(name)})`;
+
+/** Círculo com as iniciais. @param {''|'sm'} [size] */
+export function avatar(name, size = ''){
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+  const letters = words.slice(0, 2).map(w => [...w][0]).join('').toUpperCase() || '—';
+  return `<span class="avatar ${size} tone-${toneOf(name)}" aria-hidden="true">${escapeHtml(letters)}</span>`;
+}
+
+/** Primeira célula das tabelas de clientes e leads: avatar, nome (abre a linha pelo teclado) e uma linha de apoio. */
+export function nameCell(id, name, sub){
+  return `<div class="client-cell">${avatar(name)}<div>
+    <button type="button" class="row-link" data-fk="open:${escapeHtml(id)}">${escapeHtml(name)}</button>
+    <div class="cell-sub">${escapeHtml(sub)}</div>
+  </div></div>`;
+}
+
+const ICON_PLUS  ='<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>';
 export const ICON_CLOCK = '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>';
 
 /**
@@ -27,11 +60,14 @@ export function emptyState(msg, { action = 'new-client', label = '+ Novo cliente
   </div>`;
 }
 
-/** Barra horizontal usada em combos, evolução mensal e carga por responsável. */
-export function barRow(label, pct, value, valueClass = ''){
+/**
+ * Barra horizontal usada em combos, evolução mensal e carga por responsável.
+ * @param {string} [color] cor em CSS (ver seriesColor); sem ela, a barra usa a cor de destaque
+ */
+export function barRow(label, pct, value, valueClass = '', color = 'var(--accent)'){
   return `<div class="combo-bar-row">
-    <div class="combo-bar-label">${escapeHtml(label)}</div>
-    <div class="combo-bar-track"><div class="combo-bar-fill" style="width:${pct}%"></div></div>
+    <div class="combo-bar-label"><span class="bar-dot" style="background:${color}"></span>${escapeHtml(label)}</div>
+    <div class="combo-bar-track"><div class="combo-bar-fill" style="width:${pct}%; background:${color}"></div></div>
     <div class="combo-bar-val ${valueClass}">${escapeHtml(value)}</div>
   </div>`;
 }

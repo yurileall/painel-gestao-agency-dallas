@@ -4,8 +4,9 @@ import { state } from '../store.js';
 import { removeAdSpend, setAdSpend } from '../data/ad-spend.js';
 import { monthKey, monthLabel, todayISO } from '../lib/dates.js';
 import { fmtBRL } from '../lib/format.js';
+import { formatCentsAsCurrency, formatCurrencyValue, parseCurrency } from '../lib/mask.js';
 import { financeStats } from '../lib/stats.js';
-import { $, barRow, toast } from '../ui/dom.js';
+import { $, barRow, seriesColor, toast } from '../ui/dom.js';
 
 const wrap = $('#spendTableWrap');
 const fmtRoas = roas => roas === null ? '—' : roas.toFixed(2) + 'x';
@@ -28,7 +29,7 @@ export function renderFinanceiro(){
             <td class="cell-name">${label}</td>
             <td data-label="Vendas" class="mono">${m.deals}</td>
             <td data-label="Faturamento" class="mono">${fmtBRL(m.revenue)}</td>
-            <td data-label="Gasto c/ tráfego"><input type="number" class="inline-input" data-spend-month="${m.month}" data-fk="spend:${m.month}" min="0" step="0.01" value="${m.spend || ''}" placeholder="0,00" aria-label="Gasto com tráfego em ${label}"></td>
+            <td data-label="Gasto c/ tráfego"><input type="text" inputmode="decimal" class="inline-input" data-spend-month="${m.month}" data-fk="spend:${m.month}" value="${m.spend ? formatCurrencyValue(m.spend) : ''}" placeholder="0,00" aria-label="Gasto com tráfego em ${label}"></td>
             <td data-label="CPA" class="mono dim">${m.cpa === null ? '—' : fmtBRL(m.cpa)}</td>
             <td data-label="Lucro" class="mono ${m.profit >= 0 ? 'pos' : 'neg'}">${fmtBRL(m.profit)}</td>
             <td data-label="ROAS" class="mono dim">${fmtRoas(m.roas)}</td>
@@ -41,8 +42,9 @@ export function renderFinanceiro(){
     </table>`;
 
   const maxCombo = Math.max(...Object.values(s.byCombo), 1);
-  $('#revenueByCombo').innerHTML = Object.keys(COMBOS).map(k =>
-    barRow(COMBOS[k].label, Math.round(s.byCombo[k] / maxCombo * 100), fmtBRL(s.byCombo[k]), 'wide')).join('');
+  // mesma ordem (e portanto mesma cor por combo) do painel "Combos vendidos" do dashboard
+  $('#revenueByCombo').innerHTML = Object.keys(COMBOS).map((k, i) =>
+    barRow(COMBOS[k].label, Math.round(s.byCombo[k] / maxCombo * 100), fmtBRL(s.byCombo[k]), 'wide', seriesColor(i))).join('');
 }
 
 /** Mostra o erro e redesenha, para a tabela voltar a refletir o que está salvo. */
@@ -51,15 +53,23 @@ function failed(action, res){
   renderFinanceiro();
 }
 
+// Formata enquanto digita: cada dígito entra pela direita, como em caixa eletrônico.
+wrap.addEventListener('input', e => {
+  const input = e.target.closest('[data-spend-month]');
+  if(!input) return;
+  const digits = input.value.replace(/\D/g, '');
+  input.value = digits ? formatCentsAsCurrency(digits) : '';
+});
+
 wrap.addEventListener('change', async e => {
   const input = e.target.closest('[data-spend-month]');
   if(!input) return;
   const month = input.dataset.spendMonth;
   const text = input.value.trim();
-  const amount = Number(text);
+  const amount = parseCurrency(text);
   if(text !== '' && (!Number.isFinite(amount) || amount < 0)){
     toast('O gasto precisa ser um número igual ou maior que zero.', 'error');
-    input.value = state.adSpend[month] || '';
+    input.value = state.adSpend[month] ? formatCurrencyValue(state.adSpend[month]) : '';
     return;
   }
   const res = text === '' ? await removeAdSpend(month) : await setAdSpend(month, amount);

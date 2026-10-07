@@ -4,6 +4,7 @@ import { state } from '../store.js';
 import { saveLead, deleteLead } from '../data/leads.js';
 import { todayISO } from '../lib/dates.js';
 import { escapeHtml } from '../lib/format.js';
+import { attachPhoneMask, formatPhone } from '../lib/mask.js';
 import { newId } from '../lib/mappers.js';
 import { validateLead } from '../lib/validate.js';
 import { $, toast } from './dom.js';
@@ -20,6 +21,7 @@ const modal = createModal($('#leadOverlay'), {
 
 $('#lCombo').innerHTML = '<option value="">Ainda não decidiu</option>'
   + Object.entries(COMBOS).map(([key, c]) => `<option value="${key}">${escapeHtml(c.label)}</option>`).join('');
+attachPhoneMask($('#lWhats'));
 
 /** @param {import('../lib/mappers.js').Lead|null} lead null para um lead novo */
 export function openLeadModal(lead){
@@ -27,7 +29,7 @@ export function openLeadModal(lead){
   editingId = lead ? lead.id : null;
   $('#leadModalTitle').textContent = lead ? 'Editar lead' : 'Novo lead';
   $('#lName').value = lead?.name || '';
-  $('#lWhats').value = lead?.whatsapp || '';
+  $('#lWhats').value = formatPhone((lead?.whatsapp || '').replace(/\D/g, ''));
   $('#lCombo').value = lead?.combo || '';
   $('#lContactDate').value = lead?.contactDate || todayISO();
   $('#lFollowUpDate').value = lead?.followUpDate || '';

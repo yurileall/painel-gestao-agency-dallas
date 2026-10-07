@@ -1,23 +1,13 @@
 /* Constantes do negócio. Sem DOM e sem Supabase: pode ser importado nos testes. */
 
+/* kind:'combo' = escolha única entre si; kind:'addon' = itens avulsos que podem ser combinados entre si, mas não com um combo. */
 export const COMBOS = {
-  basico:     { label:'Básico que Funciona', price:197.90, deliverables:['lp','whats'] },
-  presenca:   { label:'Presença Digital',    price:297.00, deliverables:['lp','whats','artes3','seo'] },
-  autoridade: { label:'Kit Autoridade Local',price:397.00, deliverables:['lp','whats','artes5','seo','gbp','painel'] },
+  basico:      { label:'Básico que Funciona', price:197.90, kind:'combo' },
+  presenca:    { label:'Presença Digital',    price:297.00, kind:'combo' },
+  autoridade:  { label:'Kit Autoridade Local',price:397.00, kind:'combo' },
+  landing_page:{ label:'Landing Page',        price:197.90, kind:'addon' },
+  link_bio:    { label:'Link na Bio',         price:197.90, kind:'addon' },
 };
-
-export const DELIVERABLE_LABELS = {
-  lp:'Landing page publicada',
-  whats:'Integração com WhatsApp',
-  artes3:'3 artes para Instagram entregues',
-  artes5:'5 artes para Instagram entregues',
-  seo:'SEO configurado',
-  gbp:'Google Business Profile otimizado',
-  painel:'Painel de atendimento (link na bio) publicado',
-};
-
-/* Entregáveis que guardam um link além do "feito". */
-export const LINK_DELIVERABLES = ['lp','painel'];
 
 export const STATUS_LABELS = { pendente:'Em espera', em_producao:'Em produção', entregue:'Pronto' };
 export const STATUS_ORDER = ['pendente','em_producao','entregue'];

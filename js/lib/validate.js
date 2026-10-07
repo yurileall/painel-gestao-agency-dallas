@@ -25,15 +25,6 @@ export function isHttpUrl(s){
   }
 }
 
-/** @returns {Object<string, import('./mappers.js').Deliverable>} cópia com os links normalizados */
-export function normalizeDeliverables(deliverables){
-  const out = {};
-  for(const [key, val] of Object.entries(deliverables || {})){
-    out[key] = (val && typeof val === 'object') ? { done: !!val.done, url: normalizeUrl(val.url) } : !!val;
-  }
-  return out;
-}
-
 function nameError(name){
   if(!name || !name.trim()) return 'Informe o nome.';
   if(name.length > MAX_NAME) return `O nome pode ter no máximo ${MAX_NAME} caracteres.`;
@@ -47,6 +38,15 @@ function whatsappError(whatsapp){
   return digits.length >= 10 && digits.length <= 13 ? null : 'WhatsApp incompleto. Use DDD + número, ex.: (71) 91234-5678.';
 }
 
+/* Um combo fechado é exclusivo; itens avulsos podem ser combinados entre si, mas não com um combo. */
+function comboError(combo){
+  if(!Array.isArray(combo) || !combo.length || !combo.every(k => COMBOS[k])) return 'Escolha um combo ou ao menos um item avulso.';
+  const kinds = new Set(combo.map(k => COMBOS[k].kind));
+  if(kinds.has('combo') && combo.length > 1) return 'Escolha só um combo, ou use itens avulsos em vez dele.';
+  if(kinds.size > 1) return 'Não dá para combinar um combo com itens avulsos.';
+  return null;
+}
+
 /** @param {Client} c */
 export function validateClient(c){
   const errors = {};
@@ -54,7 +54,7 @@ export function validateClient(c){
 
   set('name', nameError(c.name));
   set('whatsapp', whatsappError(c.whatsapp));
-  if(!COMBOS[c.combo]) set('combo', 'Escolha um combo.');
+  set('combo', comboError(c.combo));
   if(!STATUS_ORDER.includes(c.status)) set('status', 'Status inválido.');
 
   if(typeof c.price !== 'number' || !Number.isFinite(c.price)) set('price', 'Informe um valor numérico.');
@@ -64,12 +64,8 @@ export function validateClient(c){
   if(!c.saleDate) set('saleDate', 'Informe a data da venda.');
   else if(!isValidISODate(c.saleDate)) set('saleDate', 'Data inválida.');
 
-  for(const val of Object.values(c.deliverables || {})){
-    if(val && typeof val === 'object' && val.url && !isHttpUrl(val.url)){
-      set('deliverables', `Link inválido: "${val.url}". Use um endereço como https://site.com.`);
-      break;
-    }
-  }
+  if(!Number.isInteger(c.slaDays) || c.slaDays < 1 || c.slaDays > 365) set('slaDays', 'Informe um prazo entre 1 e 365 dias.');
+
   return errors;
 }
 
