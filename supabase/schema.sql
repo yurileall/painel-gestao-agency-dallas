@@ -45,6 +45,28 @@ create table if not exists public.leads (
   updated_at     timestamptz not null default now()
 );
 
+-- Prospecção 1x1: perfis do Instagram abordados. Tabela mais nova que as
+-- outras: num banco antigo, este create é o que a cria. O @ é único para
+-- ninguém chamar a mesma pessoa duas vezes.
+create table if not exists public.prospects (
+  id             text primary key,
+  handle         text not null,  -- @ do perfil, sem o "@" e em minúsculas
+  whatsapp       text,
+  niche          text,
+  scenario       text,           -- A, B ou C (SCENARIOS em js/constants.js)
+  channel        text,           -- direct | whatsapp
+  first_msg_date date,           -- vazio enquanto o status for a_abordar
+  status         text not null default 'enviada',
+  next_step      text,
+  next_step_date date,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create unique index if not exists prospects_handle_key on public.prospects (handle);
+
+-- Tabela já criada sem a coluna: adiciona se faltar (não mexe em quem já tem).
+alter table public.prospects add column if not exists whatsapp text;
+
 -- O painel não usa mais esta tabela (prazo agora é por cliente, coluna
 -- clients.sla_days acima). Mantida aqui sem uso para não apagar dados sem
 -- um "ok" explícito; pode ser removida manualmente se não for mais útil.
@@ -67,12 +89,13 @@ on conflict (id) do nothing;
 -- e o RLS nem chega a ser avaliado.
 grant usage on schema public to authenticated;
 grant select, insert, update, delete
-  on public.clients, public.leads, public.app_settings, public.ad_spend
+  on public.clients, public.leads, public.prospects, public.app_settings, public.ad_spend
   to authenticated;
 
 -- ---------- RLS ----------
 alter table public.clients      enable row level security;
 alter table public.leads        enable row level security;
+alter table public.prospects    enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.ad_spend     enable row level security;
 
@@ -80,12 +103,15 @@ alter table public.ad_spend     enable row level security;
 -- liberando todas as operações para quem está logado.
 drop policy if exists clients_authenticated      on public.clients;
 drop policy if exists leads_authenticated        on public.leads;
+drop policy if exists prospects_authenticated    on public.prospects;
 drop policy if exists app_settings_authenticated on public.app_settings;
 drop policy if exists ad_spend_authenticated     on public.ad_spend;
 
 create policy clients_authenticated on public.clients
   for all to authenticated using (true) with check (true);
 create policy leads_authenticated on public.leads
+  for all to authenticated using (true) with check (true);
+create policy prospects_authenticated on public.prospects
   for all to authenticated using (true) with check (true);
 create policy app_settings_authenticated on public.app_settings
   for all to authenticated using (true) with check (true);
@@ -115,6 +141,14 @@ begin
     alter table public.leads add constraint leads_name_check
       check (length(btrim(name)) > 0) not valid;
   end if;
+  if not exists (select 1 from pg_constraint where conname = 'prospects_handle_check' and conrelid = 'public.prospects'::regclass) then
+    alter table public.prospects add constraint prospects_handle_check
+      check (handle ~ '^[a-z0-9._]{1,30}$') not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'prospects_status_check' and conrelid = 'public.prospects'::regclass) then
+    alter table public.prospects add constraint prospects_status_check
+      check (status in ('a_abordar', 'enviada', 'respondeu', 'previa', 'fechou', 'sem_interesse', 'sem_resposta')) not valid;
+  end if;
   if not exists (select 1 from pg_constraint where conname = 'ad_spend_amount_check' and conrelid = 'public.ad_spend'::regclass) then
     alter table public.ad_spend add constraint ad_spend_amount_check
       check (amount >= 0) not valid;
@@ -138,7 +172,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['clients', 'leads', 'app_settings', 'ad_spend'] loop
+  foreach t in array array['clients', 'leads', 'prospects', 'app_settings', 'ad_spend'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
