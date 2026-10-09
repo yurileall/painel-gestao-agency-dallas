@@ -1,7 +1,7 @@
 /* Cálculos das telas. Funções puras: recebem os dados e devolvem números, sem tocar no DOM. */
-import { COMBOS, DEFAULT_SLA_DAYS } from '../constants.js';
+import { COMBOS, DEFAULT_SLA_DAYS, PROSPECT_REPLIED, SCENARIOS } from '../constants.js';
 import { daysBetween, monthKey, todayISO } from './dates.js';
-import { agingInfo } from './rules.js';
+import { agingInfo, prospectAging } from './rules.js';
 
 /** @typedef {import('./mappers.js').Client} Client */
 
@@ -119,5 +119,26 @@ export function operationMetrics(clients){
     finishRate: clients.length ? Math.round(clients.filter(c => c.status === 'entregue').length / clients.length * 100) : null,
     byMonth: Object.keys(perMonth).sort().map(month => ({ month, count: perMonth[month] })),
     ownerLoad: Object.keys(perOwner).map(owner => ({ owner, count: perOwner[owner] })),
+  };
+}
+
+/**
+ * @param {import('./mappers.js').Prospect[]} prospects
+ * @param {string} [today]
+ */
+export function prospectStats(prospects, today = todayISO()){
+  const contacted = prospects.filter(p => p.status !== 'a_abordar');
+  const replied = contacted.filter(p => PROSPECT_REPLIED.includes(p.status));
+  const byScenario = Object.fromEntries(Object.keys(SCENARIOS).map(k => [k, 0]));
+  prospects.forEach(p => { if(p.scenario in byScenario) byScenario[p.scenario]++; });
+  return {
+    total: prospects.length,
+    toApproach: prospects.length - contacted.length,
+    contacted: contacted.length,
+    waiting: contacted.filter(p => p.status === 'enviada').length,
+    replied: replied.length,
+    replyRate: contacted.length ? Math.round(replied.length / contacted.length * 100) : null,
+    due: prospects.filter(p => prospectAging(p, today).level === 'atrasado').length,
+    byScenario,
   };
 }

@@ -1,9 +1,10 @@
 /* Validação dos formulários. Cada função devolve { campo: 'mensagem' }; objeto vazio = válido. */
-import { COMBOS, STATUS_ORDER } from '../constants.js';
+import { COMBOS, PROSPECT_CHANNELS, PROSPECT_STATUS_ORDER, SCENARIOS, STATUS_ORDER } from '../constants.js';
 import { isValidISODate } from './dates.js';
 
 /** @typedef {import('./mappers.js').Client} Client */
 /** @typedef {import('./mappers.js').Lead} Lead */
+/** @typedef {import('./mappers.js').Prospect} Prospect */
 
 const MAX_NAME = 120;
 const MAX_PRICE = 9999999999.99; // limite da coluna numeric(12,2)
@@ -23,6 +24,13 @@ export function isHttpUrl(s){
   }catch{
     return false;
   }
+}
+
+/** Aceita "@Dra.Exemplo" ou o link do perfil colado do Instagram; devolve "dra.exemplo". */
+export function normalizeHandle(s){
+  const text = String(s ?? '').trim();
+  const fromUrl = text.match(/instagram\.com\/([^/?#\s]+)/i);
+  return (fromUrl ? fromUrl[1] : text).replace(/^@+/, '').toLowerCase();
 }
 
 function nameError(name){
@@ -85,5 +93,33 @@ export function validateLead(l){
     if(!isValidISODate(l.followUpDate)) set('followUpDate', 'Data inválida.');
     else if(l.contactDate && l.followUpDate < l.contactDate) set('followUpDate', 'O retorno não pode ser antes da data do contato.');
   }
+  return errors;
+}
+
+/**
+ * @param {Prospect} p com o handle já normalizado (ver normalizeHandle)
+ * @param {Prospect[]} [existing] perfis já cadastrados, para não abordar a mesma pessoa duas vezes
+ */
+export function validateProspect(p, existing = []){
+  const errors = {};
+  const set = (field, msg) => { if(msg) errors[field] = msg; };
+
+  // regra do próprio Instagram: letras, números, ponto e sublinhado, até 30 caracteres
+  if(!p.handle) set('handle', 'Informe o @ do perfil.');
+  else if(!/^[a-z0-9._]{1,30}$/.test(p.handle)) set('handle', 'Use o @ do perfil, ex.: @dra.exemplo.');
+  else if(existing.some(x => x.id !== p.id && x.handle === p.handle)) set('handle', 'Esse perfil já está na lista.');
+
+  set('whatsapp', whatsappError(p.whatsapp));
+  if(p.scenario && !SCENARIOS[p.scenario]) set('scenario', 'Cenário inválido.');
+  if(!PROSPECT_CHANNELS[p.channel]) set('channel', 'Canal inválido.');
+  if(!PROSPECT_STATUS_ORDER.includes(p.status)) set('status', 'Status inválido.');
+
+  if(p.firstMsgDate){
+    if(!isValidISODate(p.firstMsgDate)) set('firstMsgDate', 'Data inválida.');
+  }else if(p.status !== 'a_abordar'){
+    set('firstMsgDate', 'Informe a data da primeira mensagem.');
+  }
+
+  if(p.nextStepDate && !isValidISODate(p.nextStepDate)) set('nextStepDate', 'Data inválida.');
   return errors;
 }

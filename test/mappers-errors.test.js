@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clientToRow, rowToClient, leadToRow, rowToLead, newId } from '../js/lib/mappers.js';
+import { clientToRow, rowToClient, leadToRow, rowToLead, prospectToRow, rowToProspect, newId } from '../js/lib/mappers.js';
 import { dbErrorMessage, isNetworkError } from '../js/lib/errors.js';
 
 test('cliente: ida e volta pelo formato do banco preserva os dados', () => {
@@ -37,6 +37,19 @@ test('lead: ida e volta pelo formato do banco preserva os dados', () => {
   const lead = { id:'l_abc', name:'Zé', whatsapp:'71912345678', combo:'basico', contactDate:'2026-10-01', followUpDate:'2026-10-08', notes:'obs' };
   assert.deepEqual(rowToLead(leadToRow(lead)), lead);
   assert.equal(leadToRow({ ...lead, followUpDate:null, combo:'' }).follow_up_date, null);
+});
+
+test('perfil em prospecção: ida e volta pelo formato do banco preserva os dados', () => {
+  const prospect = {
+    id:'p_abc', handle:'dra.exemplo', whatsapp:'(71) 91234-5678', niche:'Psicologia', scenario:'B', channel:'whatsapp', firstMsgDate:'2026-10-09',
+    status:'respondeu', nextStep:'Enviar prévia', nextStepDate:'2026-10-10',
+  };
+  assert.deepEqual(rowToProspect(prospectToRow(prospect)), prospect);
+  const row = prospectToRow({ ...prospect, scenario:'', firstMsgDate:null, nextStep:'' });
+  assert.equal(row.scenario, null);
+  assert.equal(row.first_msg_date, null);
+  assert.equal(row.next_step, null);
+  assert.equal('firstMsgDate' in row, false);
 });
 
 test('newId gera ids únicos com o prefixo pedido', () => {

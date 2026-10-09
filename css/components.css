@@ -80,6 +80,11 @@ tr.client-row:hover{ background:rgba(var(--fg-rgb),0.03); }
 .row-link:hover{ text-decoration:underline; text-decoration-color:var(--text-faint); text-underline-offset:3px; }
 .cell-notes{ max-width:240px; }
 .cell-sub{ color:var(--text-faint); font-size:12px; margin-top:1px; }
+.cell-link{ color:inherit; text-decoration:underline; text-decoration-color:var(--border-hover); text-underline-offset:3px; border-radius:4px; }
+.cell-link:hover{ color:var(--accent); text-decoration-color:currentColor; }
+/* Próximo passo da prospecção: o texto e, ao lado, quando fazer */
+.next-step{ display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px 8px; }
+.scenario-key{ margin-right:10px; font-weight:600; color:var(--text); }
 
 .badge{ display:inline-flex; align-items:center; gap:6px; padding:2px 9px 2px 8px; border-radius:99px; font-size:12px; font-weight:500; white-space:nowrap; border:1px solid transparent; }
 .badge-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
@@ -89,6 +94,17 @@ tr.client-row:hover{ background:rgba(var(--fg-rgb),0.03); }
 .badge.em_producao .badge-dot{ background:var(--prog); }
 .badge.entregue{ color:var(--ok); background:var(--ok-soft); }
 .badge.entregue .badge-dot{ background:var(--ok); }
+/* Status da prospecção: neutro antes da mensagem e depois de encerrar sem venda */
+.badge.a_abordar, .badge.sem_interesse, .badge.sem_resposta{ color:var(--text-dim); background:rgba(var(--fg-rgb),0.055); }
+.badge.a_abordar .badge-dot, .badge.sem_interesse .badge-dot, .badge.sem_resposta .badge-dot{ background:var(--text-faint); }
+.badge.enviada{ color:var(--wait); background:var(--wait-soft); }
+.badge.enviada .badge-dot{ background:var(--wait); }
+.badge.respondeu{ color:var(--prog); background:var(--prog-soft); }
+.badge.respondeu .badge-dot{ background:var(--prog); }
+.badge.previa{ color:var(--violet); background:var(--violet-soft); }
+.badge.previa .badge-dot{ background:var(--violet); }
+.badge.fechou{ color:var(--ok); background:var(--ok-soft); }
+.badge.fechou .badge-dot{ background:var(--ok); }
 
 .combo-tag{ display:inline-block; white-space:nowrap; font-size:12px; padding:2px 8px; border-radius:6px; background:rgba(var(--fg-rgb),0.055); color:var(--text-dim); }
 
@@ -125,6 +141,7 @@ tr.client-row:hover{ background:rgba(var(--fg-rgb),0.03); }
 .field textarea{ resize:vertical; min-height:76px; padding:10px 12px; line-height:1.5; }
 .field [aria-invalid="true"]{ border-color:var(--danger); }
 .field-error{ color:var(--danger); font-size:12px; margin-top:6px; }
+.field-hint{ color:var(--text-faint); font-size:12px; line-height:1.45; margin-top:6px; }
 .form-error{ padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--danger-line); background:var(--danger-soft); color:var(--danger); font-size:12.5px; line-height:1.5; }
 .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 

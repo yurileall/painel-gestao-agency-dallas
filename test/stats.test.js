@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { availableMonths, dashboardStats, pipelineStats, financeStats, operationMetrics } from '../js/lib/stats.js';
+import { availableMonths, dashboardStats, pipelineStats, financeStats, operationMetrics, prospectStats } from '../js/lib/stats.js';
 
 const TODAY = '2026-10-10';
 const CLIENTS = [
@@ -103,4 +103,31 @@ test('operationMetrics: sem clientes', () => {
   assert.equal(m.avgProductionDays, null);
   assert.equal(m.finishRate, null);
   assert.deepEqual(m.byMonth, []);
+});
+
+test('prospectStats: funil, taxa de resposta e o que está para hoje', () => {
+  const PROSPECTS = [
+    { id:'1', status:'a_abordar',     scenario:'A', firstMsgDate:null,         nextStepDate:null },
+    { id:'2', status:'enviada',       scenario:'B', firstMsgDate:'2026-10-08', nextStepDate:null },
+    { id:'3', status:'respondeu',     scenario:'B', firstMsgDate:'2026-10-07', nextStepDate:'2026-10-10' },
+    { id:'4', status:'previa',        scenario:'',  firstMsgDate:'2026-10-05', nextStepDate:'2026-10-12' },
+    { id:'5', status:'sem_interesse', scenario:'C', firstMsgDate:'2026-10-01', nextStepDate:'2026-10-02' },
+    { id:'6', status:'sem_resposta',  scenario:'C', firstMsgDate:'2026-10-01', nextStepDate:null },
+  ];
+  const s = prospectStats(PROSPECTS, TODAY);
+  assert.equal(s.total, 6);
+  assert.equal(s.toApproach, 1);
+  assert.equal(s.contacted, 5);
+  assert.equal(s.waiting, 1);
+  assert.equal(s.replied, 3);
+  assert.equal(s.replyRate, 60);
+  assert.equal(s.due, 1); // só o perfil 3: o 5 está encerrado
+  assert.deepEqual(s.byScenario, { A:1, B:2, C:2 });
+});
+
+test('prospectStats: lista vazia não divide por zero', () => {
+  const s = prospectStats([], TODAY);
+  assert.equal(s.total, 0);
+  assert.equal(s.replyRate, null);
+  assert.deepEqual(s.byScenario, { A:0, B:0, C:0 });
 });

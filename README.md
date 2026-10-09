@@ -40,18 +40,18 @@ css/
 js/
   main.js               Ponto de entrada
   config.js             URL e chave pública do Supabase
-  constants.js          Combos, entregáveis, status e responsáveis
-  store.js              Estado do app (clientes, leads, gasto) e notify()
+  constants.js          Combos, entregáveis, status, responsáveis e os cenários da prospecção
+  store.js              Estado do app (clientes, leads, prospecção, gasto) e notify()
   lib/                  Lógica pura, sem DOM nem Supabase — é o que os testes cobrem
     dates.js            Hoje, diferença em dias, mês
     format.js           Moeda, data e escape de HTML
-    mappers.js          Tipos (Client, Lead) e conversão app <-> linha do banco
+    mappers.js          Tipos (Client, Lead, Prospect) e conversão app <-> linha do banco
     rules.js            Prazo (SLA), follow-up e datas que dependem do status
     validate.js         Validação dos formulários
     stats.js            Cálculos de cada tela
     errors.js           Tradução dos erros do Supabase
   data/                 Leitura e gravação no Supabase, e tempo real
-  ui/                   Helpers de DOM, modal base, modais de cliente e lead, navegação
+  ui/                   Helpers de DOM, modal base, modais de cliente, lead e prospecção, navegação
   views/                Uma função de render por tela
   app.js                Desenho da tela ativa, carga inicial e sincronização
   auth.js               Login, logout, esqueci minha senha e sessão
@@ -73,6 +73,17 @@ test/                   Testes de js/lib
   cliente ao mesmo tempo, vale a última gravação.
 - **Validação**: `js/lib/validate.js` confere os formulários antes de gravar e
   mostra o erro embaixo do campo. O banco repete o mínimo (ver `schema.sql`).
+
+## Prospecção
+
+A tela **Prospecção** guarda os perfis do Instagram chamados no 1x1: @, WhatsApp, nicho,
+cenário, canal, data da primeira mensagem, status e próximo passo. O cenário
+(A, B ou C) é o que a bio do perfil mostra, e cada um tem o seu gancho de
+abordagem — os textos ficam em `SCENARIOS`, em `js/constants.js`.
+
+O @ é gravado sem o "@" e em minúsculas, e não se repete: o formulário avisa e
+o banco recusa (índice único em `prospects.handle`). A tela depende da tabela
+`prospects`; num banco criado antes dela, rode o `supabase/schema.sql` de novo.
 
 ## Banco (Supabase)
 

@@ -1,5 +1,5 @@
 /* Regras de prazo e de mudança de status. */
-import { STATUS_ORDER } from '../constants.js';
+import { PROSPECT_CLOSED, STATUS_ORDER } from '../constants.js';
 import { daysBetween, todayISO } from './dates.js';
 
 /** @typedef {import('./mappers.js').Client} Client */
@@ -65,4 +65,26 @@ export function adjacentStatus(status, dir){
   const idx = STATUS_ORDER.indexOf(status);
   if(idx < 0) return null;
   return STATUS_ORDER[dir === 'fwd' ? idx + 1 : idx - 1] || null;
+}
+
+/**
+ * Urgência do próximo passo de um perfil em prospecção.
+ * Conversa encerrada não cobra nada; sem data marcada, mostra há quanto tempo a mensagem está sem resposta.
+ * @param {import('./mappers.js').Prospect} prospect
+ * @param {string} [today]
+ * @returns {{ level: 'ok'|'atencao'|'atrasado', label: string }} label '' quando não há o que mostrar
+ */
+export function prospectAging(prospect, today = todayISO()){
+  if(PROSPECT_CLOSED.includes(prospect.status)) return { level:'ok', label:'' };
+  if(prospect.nextStepDate){
+    const left = daysBetween(today, prospect.nextStepDate);
+    if(left < 0) return { level:'atrasado', label:`atrasado ${-left}d` };
+    if(left === 0) return { level:'atrasado', label:'fazer hoje' };
+    if(left === 1) return { level:'atencao', label:'amanhã' };
+    return { level:'ok', label:`em ${left}d` };
+  }
+  if(prospect.status === 'enviada' && prospect.firstMsgDate){
+    return { level:'ok', label:`${daysBetween(prospect.firstMsgDate, today)}d sem resposta` };
+  }
+  return { level:'ok', label:'' };
 }

@@ -2,11 +2,13 @@
 import { state, subscribe, notify, resetData } from './store.js';
 import { loadClients } from './data/clients.js';
 import { loadLeads } from './data/leads.js';
+import { loadProspects } from './data/prospects.js';
 import { loadAdSpend } from './data/ad-spend.js';
 import { startRealtime, stopRealtime } from './data/realtime.js';
 import { $ } from './ui/dom.js';
 import { openClientModal } from './ui/client-modal.js';
 import { openLeadModal } from './ui/lead-modal.js';
+import { openProspectModal } from './ui/prospect-modal.js';
 import './ui/nav.js';
 import './ui/theme.js';
 import { renderDashboard } from './views/dashboard.js';
@@ -15,10 +17,12 @@ import { renderClientsTable } from './views/clients.js';
 import { renderFinanceiro } from './views/financeiro.js';
 import { renderMetrics } from './views/metrics.js';
 import { renderLeadsTable } from './views/leads.js';
+import { renderProspects } from './views/prospects.js';
 
 const VIEWS = {
   dashboard: renderDashboard,
   pipeline: renderPipeline,
+  prospeccao: renderProspects,
   followup: renderLeadsTable,
   clientes: renderClientsTable,
   financeiro: renderFinanceiro,
@@ -65,7 +69,7 @@ function showLoadError(msg){
 }
 
 async function loadAll(){
-  const results = await Promise.all([loadAdSpend(), loadClients(), loadLeads()]);
+  const results = await Promise.all([loadAdSpend(), loadClients(), loadLeads(), loadProspects()]);
   if(!running) return;
   lastSync = Date.now();
   showLoadError(results.find(r => !r.ok)?.message || null);
@@ -106,6 +110,7 @@ document.addEventListener('visibilitychange', () => {
 const ACTIONS = {
   'new-client': () => openClientModal(null),
   'new-lead': () => openLeadModal(null),
+  'new-prospect': () => openProspectModal(null),
 };
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-action]');

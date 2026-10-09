@@ -1,4 +1,4 @@
-/* Leitura e gravação de uma tabela com chave `id` (clientes e leads usam a mesma lógica). */
+/* Leitura e gravação de uma tabela com chave `id` (clientes, leads e prospecção usam a mesma lógica). */
 import { supabaseClient } from '../config.js';
 import { state, notify } from '../store.js';
 import { run } from './db.js';
@@ -10,7 +10,7 @@ import { run } from './db.js';
  *
  * @param {Object} cfg
  * @param {string} cfg.table     tabela no Supabase
- * @param {'clients'|'leads'} cfg.stateKey  lista correspondente em `state`
+ * @param {'clients'|'leads'|'prospects'} cfg.stateKey  lista correspondente em `state`
  * @param {(item: any) => any} cfg.toRow
  * @param {(row: any) => any} cfg.fromRow
  */

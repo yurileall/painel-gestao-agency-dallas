@@ -4,14 +4,16 @@
  * @typedef {Object} AppState
  * @property {import('./lib/mappers.js').Client[]} clients
  * @property {import('./lib/mappers.js').Lead[]} leads
+ * @property {import('./lib/mappers.js').Prospect[]} prospects
  * @property {Object<string, number>} adSpend   gasto com tráfego por mês ("AAAA-MM" → valor)
- * @property {string} currentView               dashboard | pipeline | followup | clientes | financeiro | metricas
+ * @property {string} currentView               dashboard | pipeline | prospeccao | followup | clientes | financeiro | metricas
  */
 
 /** @type {AppState} */
 export const state = {
   clients: [],
   leads: [],
+  prospects: [],
   adSpend: {},
   currentView: 'dashboard',
 };
@@ -27,5 +29,6 @@ export function notify(){ listeners.forEach(fn => fn()); }
 export function resetData(){
   state.clients = [];
   state.leads = [];
+  state.prospects = [];
   state.adSpend = {};
 }

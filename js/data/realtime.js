@@ -2,6 +2,7 @@
 import { supabaseClient } from '../config.js';
 import { applyClientChange } from './clients.js';
 import { applyLeadChange } from './leads.js';
+import { applyProspectChange } from './prospects.js';
 import { applyAdSpendChange } from './ad-spend.js';
 
 /* As tabelas precisam estar na publicação `supabase_realtime` (ver supabase/schema.sql).
@@ -10,6 +11,7 @@ import { applyAdSpendChange } from './ad-spend.js';
 const TABLES = {
   clients: applyClientChange,
   leads: applyLeadChange,
+  prospects: applyProspectChange,
   ad_spend: applyAdSpendChange,
 };
 

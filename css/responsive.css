@@ -78,6 +78,7 @@
     font-family:'Inter',sans-serif; color:var(--text-faint); font-size:12px;
   }
   .cell-notes{ max-width:none; text-align:right; }
+  .next-step{ justify-content:flex-end; }
   /* 16px evita o zoom automático do iOS ao focar um campo */
   .field input, .field select, .field textarea, .login-field input, .search{ font-size:16px; }
   .search{ flex:1; width:auto; min-width:0; }

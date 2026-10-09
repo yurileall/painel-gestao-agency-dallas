@@ -144,6 +144,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="4" width="5.5" height="16" rx="1.5"/><rect x="9.3" y="4" width="5.5" height="11" rx="1.5"/><rect x="16" y="4" width="5.5" height="7" rx="1.5"/></svg>
         Pipeline
       </button>
+      <button type="button" class="nav-item" data-view="prospeccao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 10 14"/><path d="M21 3l-7 18-4-7-7-4z"/></svg>
+        Prospecção
+      </button>
       <button type="button" class="nav-item" data-view="followup">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
         Follow-up
@@ -293,6 +297,60 @@
           <h2 class="kanban-col-head">Prontos <span class="count" id="countEntregue">0</span></h2>
           <div class="kanban-cards" id="colEntregue"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- PROSPECÇÃO -->
+    <section class="view" id="view-prospeccao">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Prospecção</h1>
+          <div class="page-sub">Perfis do Instagram chamados no 1x1 — quem já recebeu mensagem, quem respondeu e o que fazer agora.</div>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="new-client-btn compact" id="btnNewProspect" data-action="new-prospect">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Novo perfil
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Perfis na lista <span class="kpi-icon tone-accent"><svg aria-hidden="true"><use href="#i-users"/></svg></span></div>
+          <div class="kpi-value" id="prospectTotal">0</div>
+          <div class="kpi-delta" id="prospectTotalSub">todos já receberam mensagem</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Aguardando resposta <span class="kpi-icon tone-wait"><svg aria-hidden="true"><use href="#i-hourglass"/></svg></span></div>
+          <div class="kpi-value" id="prospectWaiting">0</div>
+          <div class="kpi-delta">mensagem enviada, sem retorno ainda</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Taxa de resposta <span class="kpi-icon tone-ok"><svg aria-hidden="true"><use href="#i-check-circle"/></svg></span></div>
+          <div class="kpi-value" id="prospectReplyRate">—%</div>
+          <div class="kpi-delta" id="prospectReplySub">0 de 0 abordados responderam</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Fazer hoje <span class="kpi-icon tone-danger"><svg aria-hidden="true"><use href="#i-alert"/></svg></span></div>
+          <div class="kpi-value" id="prospectDue" style="color:var(--danger);">0</div>
+          <div class="kpi-delta">próximo passo para hoje ou já atrasado</div>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <select class="select" id="prospectStatusFilter" aria-label="Filtrar por status"></select>
+        <select class="select" id="prospectScenarioFilter" aria-label="Filtrar por cenário"></select>
+        <input type="search" class="search" id="prospectSearch" placeholder="Buscar por @ ou nicho..." aria-label="Buscar perfil por @ ou nicho">
+      </div>
+
+      <div class="panel">
+        <div id="prospectsTableWrap"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Cenários e ganchos</h2></div>
+        <div id="scenariosTableWrap"></div>
       </div>
     </section>
 
@@ -578,6 +636,73 @@
       <button type="button" class="btn" id="btnCancelLead">Cancelar</button>
       <button type="button" class="btn primary convert" id="btnConvertLead" hidden>Converter em cliente ✓</button>
       <button type="button" class="btn primary" id="btnSaveLead">Salvar lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PERFIL EM PROSPECÇÃO -->
+<div class="overlay" id="prospectOverlay">
+  <div class="modal narrow" role="dialog" aria-modal="true" aria-labelledby="prospectModalTitle">
+    <div class="modal-head">
+      <h2 id="prospectModalTitle">Novo perfil</h2>
+      <button type="button" class="close-btn" id="closeProspectModal" aria-label="Fechar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label for="pHandle">@ do perfil</label>
+          <input type="text" id="pHandle" maxlength="120" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="@dra.exemplo ou o link do perfil" required>
+        </div>
+        <div class="field">
+          <label for="pWhats">WhatsApp</label>
+          <input type="tel" id="pWhats" inputmode="numeric" maxlength="15" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pNiche">Nicho</label>
+          <input type="text" id="pNiche" maxlength="120" placeholder="Ex: Psicologia, Advocacia...">
+        </div>
+        <div class="field">
+          <label for="pChannel">Canal</label>
+          <select id="pChannel"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="pScenario">Cenário (o que a bio mostra)</label>
+        <select id="pScenario"></select>
+        <div class="field-hint" id="pScenarioHook" hidden></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pStatus">Status</label>
+          <select id="pStatus"></select>
+        </div>
+        <div class="field">
+          <label for="pFirstMsgDate">Data da 1ª mensagem</label>
+          <input type="date" id="pFirstMsgDate">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pNextStep">Próximo passo</label>
+          <input type="text" id="pNextStep" maxlength="200" placeholder="Ex: Enviar prévia">
+        </div>
+        <div class="field">
+          <label for="pNextStepDate">Fazer em</label>
+          <input type="date" id="pNextStepDate">
+        </div>
+      </div>
+
+      <div class="form-error" role="alert" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn danger" id="btnDeleteProspect" hidden>Excluir perfil</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="btnCancelProspect">Cancelar</button>
+      <button type="button" class="btn primary" id="btnSaveProspect">Salvar perfil</button>
     </div>
   </div>
 </div>

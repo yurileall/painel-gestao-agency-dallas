@@ -11,8 +11,9 @@ export const comboLabel = combo => {
   return escapeHtml(labels.length ? labels.join(' + ') : '—');
 };
 
-export function statusBadge(status){
-  return `<span class="badge ${escapeHtml(status)}"><span class="badge-dot"></span>${escapeHtml(STATUS_LABELS[status] || status)}</span>`;
+/** @param {Object<string, string>} [labels] rótulos do status; por padrão, os do pipeline de clientes */
+export function statusBadge(status, labels = STATUS_LABELS){
+  return `<span class="badge ${escapeHtml(status)}"><span class="badge-dot"></span>${escapeHtml(labels[status] || status)}</span>`;
 }
 
 /* Cores para diferenciar séries (combos, responsáveis). Não usar as de estado: vermelho aqui pareceria alerta. */
@@ -46,6 +47,7 @@ export function nameCell(id, name, sub){
 
 const ICON_PLUS  ='<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/>';
 export const ICON_CLOCK = '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>';
+export const ICON_SEND = '<path d="M21 3 10 14"/><path d="M21 3l-7 18-4-7-7-4z"/>';
 
 /**
  * @param {string} msg

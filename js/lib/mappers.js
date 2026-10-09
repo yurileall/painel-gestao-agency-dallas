@@ -29,7 +29,21 @@ import { DEFAULT_SLA_DAYS } from '../constants.js';
  * @property {string} [notes]
  */
 
-/** @param {'c'|'l'} prefix @returns {string} */
+/**
+ * @typedef {Object} Prospect                  Perfil do Instagram abordado no 1x1
+ * @property {string} id
+ * @property {string} handle                   @ do perfil, sem o "@" e em minúsculas (ver normalizeHandle)
+ * @property {string} [whatsapp]
+ * @property {string} [niche]
+ * @property {string} [scenario]               chave de SCENARIOS; '' quando a bio ainda não foi avaliada
+ * @property {string} channel                  chave de PROSPECT_CHANNELS
+ * @property {string|null} firstMsgDate        AAAA-MM-DD → coluna first_msg_date; null enquanto estiver "a abordar"
+ * @property {string} status                   chave de PROSPECT_STATUS_LABELS
+ * @property {string} [nextStep]               → coluna next_step
+ * @property {string|null} nextStepDate        AAAA-MM-DD → coluna next_step_date
+ */
+
+/** @param {'c'|'l'|'p'} prefix @returns {string} */
 export function newId(prefix){
   return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -95,5 +109,37 @@ export function rowToLead(r){
     contactDate: r.contact_date,
     followUpDate: r.follow_up_date,
     notes: r.notes,
+  };
+}
+
+/** @param {Prospect} p */
+export function prospectToRow(p){
+  return {
+    id: p.id,
+    handle: p.handle,
+    whatsapp: p.whatsapp || null,
+    niche: p.niche || null,
+    scenario: p.scenario || null,
+    channel: p.channel || null,
+    first_msg_date: p.firstMsgDate || null,
+    status: p.status,
+    next_step: p.nextStep || null,
+    next_step_date: p.nextStepDate || null,
+  };
+}
+
+/** @returns {Prospect} */
+export function rowToProspect(r){
+  return {
+    id: r.id,
+    handle: r.handle,
+    whatsapp: r.whatsapp,
+    niche: r.niche,
+    scenario: r.scenario,
+    channel: r.channel,
+    firstMsgDate: r.first_msg_date,
+    status: r.status,
+    nextStep: r.next_step,
+    nextStepDate: r.next_step_date,
   };
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { agingInfo, leadAging, applyStatusDates, adjacentStatus } from '../js/lib/rules.js';
+import { agingInfo, leadAging, prospectAging, applyStatusDates, adjacentStatus } from '../js/lib/rules.js';
 
 const TODAY = '2026-10-10';
 const SLA = 3;
@@ -60,4 +60,24 @@ test('adjacentStatus para nas pontas do pipeline', () => {
   assert.equal(adjacentStatus('em_producao', 'back'), 'pendente');
   assert.equal(adjacentStatus('pendente', 'back'), null);
   assert.equal(adjacentStatus('desconhecido', 'fwd'), null);
+});
+
+test('prospectAging com data marcada para o próximo passo', () => {
+  const at = nextStepDate => prospectAging({ status:'respondeu', firstMsgDate:'2026-10-01', nextStepDate }, TODAY);
+  assert.deepEqual(at('2026-10-08'), { level:'atrasado', label:'atrasado 2d' });
+  assert.deepEqual(at('2026-10-10'), { level:'atrasado', label:'fazer hoje' });
+  assert.deepEqual(at('2026-10-11'), { level:'atencao', label:'amanhã' });
+  assert.deepEqual(at('2026-10-15'), { level:'ok', label:'em 5d' });
+});
+
+test('prospectAging sem data: conta os dias sem resposta só de quem recebeu mensagem', () => {
+  assert.deepEqual(prospectAging({ status:'enviada', firstMsgDate:'2026-10-07', nextStepDate:null }, TODAY), { level:'ok', label:'3d sem resposta' });
+  assert.deepEqual(prospectAging({ status:'a_abordar', firstMsgDate:null, nextStepDate:null }, TODAY), { level:'ok', label:'' });
+  assert.deepEqual(prospectAging({ status:'respondeu', firstMsgDate:'2026-10-07', nextStepDate:null }, TODAY), { level:'ok', label:'' });
+});
+
+test('prospectAging: conversa encerrada não cobra próximo passo', () => {
+  for(const status of ['fechou', 'sem_interesse', 'sem_resposta']){
+    assert.deepEqual(prospectAging({ status, firstMsgDate:'2026-10-01', nextStepDate:'2026-10-02' }, TODAY), { level:'ok', label:'' });
+  }
 });
